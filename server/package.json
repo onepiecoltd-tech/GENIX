@@ -1,0 +1,9 @@
+{
+  "name": "shk-multiplayer-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server nhieu nguoi choi cho Son Hai Kinh Phieu Luu Ky (WebSocket)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test_client.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}

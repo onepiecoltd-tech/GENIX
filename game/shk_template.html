@@ -41,14 +41,15 @@
   #zoneTitle .zd { font-size:13px; color:#dcefd2; text-shadow:0 1px 8px rgba(0,0,0,.9); }
 
   /* HUD */
-  #hud { position:absolute; top:10px; left:10px; z-index:8; display:flex; gap:11px; align-items:center;
-         background:rgba(6,22,12,.82); border:1px solid #3f7a4c; border-radius:14px; padding:8px 13px; max-width:min(600px,94vw); backdrop-filter:blur(5px); }
-  #hud .avatar { width:56px; height:44px; object-fit:cover; border-radius:9px; border:1px solid #ffd76a; flex:none; }
-  #hud .who .nm { font-weight:800; color:#fff; font-size:14.5px; line-height:1.25; }
-  #hud .who .sc { font-style:italic; color:#a9c79b; font-size:11.5px; line-height:1.25; }
-  #hud .bar { width:104px; height:9px; background:#274435; border-radius:6px; overflow:hidden; }
+  #hud { position:absolute; top:8px; left:8px; z-index:8; display:flex; gap:8px; align-items:center;
+         background:rgba(6,22,12,.82); border:1px solid #3f7a4c; border-radius:12px; padding:5px 9px; max-width:min(468px,94vw); backdrop-filter:blur(5px); }
+  #hud .avatar { width:44px; height:35px; object-fit:cover; border-radius:8px; border:1px solid #ffd76a; flex:none; }
+  #hud .who { max-width:148px; }
+  #hud .who .nm { font-weight:800; color:#fff; font-size:13px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #hud .who .sc { font-style:italic; color:#a9c79b; font-size:10.5px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #hud .bar { width:74px; height:8px; background:#274435; border-radius:6px; overflow:hidden; }
   #hud #hpFill { height:100%; background:linear-gradient(90deg,#57d95e,#b6f09a); transition:width .4s; }
-  #hud .stat { font-size:12.5px; color:#cfe6c2; line-height:1.45; }
+  #hud .stat { font-size:11.5px; color:#cfe6c2; line-height:1.35; }
   #hud .stat b { color:#ffd76a; }
 
   /* Thẻ sinh linh trên map */
@@ -165,7 +166,7 @@
       <div class="bar"><div id="hpFill" style="width:100%"></div></div>
     </div>
     <div class="stat" id="hudStat">—</div>
-    <button class="btn" style="padding:6px 14px;white-space:nowrap" onclick="toggleLive(!LIVE.on)">🔴 LIVE</button>
+    <button class="btn" style="padding:4px 10px;white-space:nowrap;font-size:12.5px" onclick="toggleLive(!LIVE.on)">🔴 LIVE</button>
   </div>
   <div id="liveBar" class="hidden">
     <span>🔴 <b>LIVE</b></span><span id="liveCount">⏱ 10.0s</span>
@@ -345,7 +346,8 @@ function showReveal(){
 <script>
 /* ===== Thế giới game ===== */
 let curMap = null, curTargets = [], currentEnc = null;
-const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y:56},{x:13,y:71},{x:60,y:73} ];
+const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y:56},{x:13,y:71},{x:60,y:73},
+              {x:31,y:38},{x:47,y:70},{x:79,y:71},{x:89,y:33} ];
 const WIN_MERGES = 40;
 
 function effPower(){ return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
@@ -422,15 +424,19 @@ function travelTo(id){
   if (curMap && curMap.id === id) return;
   closeEnc(); goMap(MAPBY[id], "travel");
 }
-function sampleAmbient(map, n){
+function sampleAmbient(map, n, usedArts){
   const pool = [];
   map.buckets.forEach(b => { if (BYBUCKET[b]) pool.push(...BYBUCKET[b]); });
   const out = [], seen = new Set([me.creature.taxid]);
+  const used = usedArts || new Set();
   let guard = 0;
-  while (out.length < n && guard++ < 300 && pool.length){
+  while (out.length < n && guard++ < 600 && pool.length){
     const r = pool[Math.floor(Math.random() * pool.length)];
     if (seen.has(r[0]) || prog.absorbed.includes(r[0])) continue;
-    seen.add(r[0]); out.push(fromRow(r));
+    seen.add(r[0]);
+    const c = fromRow(r);
+    if (c.art){ if (used.has(c.art)) continue; used.add(c.art); }
+    out.push(c);
   }
   return out;
 }
@@ -440,8 +446,10 @@ function goMap(map, arrive){
   $("zoneName").textContent = map.name + " " + map.han;
   $("zoneDesc").textContent = map.desc;
   document.querySelectorAll(".zbtn").forEach(b => b.classList.toggle("active", b.dataset.map === map.id));
-  const feats = map.featured.filter(t => t !== me.creature.taxid).map(t => fromFeatured(FEAT[t]));
-  curTargets = feats.concat(sampleAmbient(map, 6));
+  const featAll = map.featured.filter(t => t !== me.creature.taxid).map(t => fromFeatured(FEAT[t]));
+  const feats = featAll.sort(() => Math.random() - 0.5).slice(0, 7);
+  const usedArts = new Set(feats.map(c => c.art).filter(Boolean));
+  curTargets = feats.concat(sampleAmbient(map, 5, usedArts));
   renderLayer(); renderSuggestions();
   if (arrive === "travel" || arrive === "flee"){
     const predators = curTargets.filter(c => !prog.absorbed.includes(c.taxid) && powerOf(c.blocks) > effPower());
@@ -551,8 +559,15 @@ function randomEncounter(){
   openEncounter(pool[Math.floor(Math.random() * pool.length)], false);
 }
 function renderSuggestions(){
-  const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
-    .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks)).slice(0, 3);
+  const sorted = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
+    .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks));
+  const pool = [], usedA = new Set();
+  for (const c of sorted){
+    if (pool.length >= 3) break;
+    if (c.art && usedA.has(c.art)) continue;
+    if (c.art) usedA.add(c.art);
+    pool.push(c);
+  }
   const nx = prog ? nextRecipe() : null;
   const givesPart = c => nx && nx.recipe.parts.some(p => !p.mapPart && partCount(p) < p.need && p.test(c));
   $("sugList").innerHTML = pool.length ? pool.map((c, i) => {
