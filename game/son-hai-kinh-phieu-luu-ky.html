@@ -51,6 +51,10 @@
   #hud #hpFill { height:100%; background:linear-gradient(90deg,#57d95e,#b6f09a); transition:width .4s; }
   #hud .stat { font-size:11.5px; color:#cfe6c2; line-height:1.35; }
   #hud .stat b { color:#ffd76a; }
+  #onlinePanel { position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:40; width:min(430px,94vw);
+    background:rgba(6,22,12,.96); border:1px solid #3f7a4c; border-radius:14px; padding:14px 16px; backdrop-filter:blur(6px); }
+  #onlinePanel input { background:#0d2a18; border:1px solid #3f7a4c; border-radius:8px; color:#eaf6e2; padding:8px 10px; font-size:13.5px; }
+  .card.player { outline:2px solid #ffd76a; outline-offset:-2px; }
 
   /* Thẻ sinh linh trên map */
   #encounterLayer { position:absolute; inset:0; z-index:4; }
@@ -149,7 +153,17 @@
     <h1>🏔 SƠN HẢI KINH PHIÊU LƯU KÝ</h1>
     <p class="tag">Đăng nhập để Sơn Hải Kinh chọn cho bạn một loài — khoẻ thì đi săn, yếu thì trốn sang map khác.</p>
     <div class="loginCard" id="loginCard"></div>
+    <button class="btn big" style="margin-top:12px" onclick="toggleOnlinePanel()">🌐 Chơi online nhiều người</button>
   </div>
+</div>
+
+<div id="onlinePanel" class="hidden">
+  <h3 style="margin:0 0 6px">🌐 Chơi online nhiều người</h3>
+  <p style="font-size:12.5px;color:#cfe3c2;margin:0 0 8px">Vào thế giới chung: mỗi người được Sơn Hải Kinh random một loài thật, săn sinh linh hoang dã và săn lẫn nhau, tiến hoá theo đúng công thức bộ phận. Cần một server đang chạy — cách chạy/deploy xem file MULTIPLAYER.md trong dự án.</p>
+  <input id="onlineName" placeholder="Tên của bạn" style="width:100%;box-sizing:border-box;margin:2px 0 6px">
+  <input id="srvUrl" placeholder="ws://127.0.0.1:8788" style="width:100%;box-sizing:border-box;margin:2px 0 6px">
+  <button class="btn" style="width:100%;margin:4px 0" onclick="connectOnline()">Kết nối &amp; vào chơi</button>
+  <button class="btn" style="width:100%" onclick="disconnectOnline()">Ngắt kết nối</button>
 </div>
 
 <div id="stage" class="hidden">
@@ -167,6 +181,7 @@
     </div>
     <div class="stat" id="hudStat">—</div>
     <button class="btn" style="padding:4px 10px;white-space:nowrap;font-size:12.5px" onclick="toggleLive(!LIVE.on)">🔴 LIVE</button>
+    <button class="btn" style="padding:4px 10px;white-space:nowrap;font-size:12.5px" onclick="toggleOnlinePanel()">🌐 Online</button>
   </div>
   <div id="liveBar" class="hidden">
     <span>🔴 <b>LIVE</b></span><span id="liveCount">⏱ 10.0s</span>
@@ -350,7 +365,7 @@ const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y
               {x:31,y:38},{x:47,y:70},{x:79,y:71},{x:89,y:33} ];
 const WIN_MERGES = 40;
 
-function effPower(){ return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
+function effPower(){ if (window.ONLINE && window.ONLINE.on) return window.ONLINE.power || 0; return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
 /* ===== Tiến hoá theo công thức Sơn Hải Kinh: dị thú = ghép bộ phận của các loài thật =====
    Mỗi cấp cần: (1) đủ số lần gộp gen, (2) đủ "bộ phận" — tức đã săn/gộp đúng nhóm loài
    mà sách mô tả (vd Ứng Long: vảy cá + sừng trâu + thân rắn + vuốt ưng + cánh chim). */
@@ -395,7 +410,7 @@ function stageMet(s){
 }
 function formStage(){ let s = 0; while (s < 8 && stageMet(s + 1)) s++; return s; }
 function nextRecipe(){ const s = formStage(); return s >= 8 ? null : { stage: s + 1, recipe: RECIPES[s + 1] }; }
-function beastName(){ const s = formStage(); return s ? BEASTS[s-1].name : "Loài gốc"; }
+function beastName(){ if (window.ONLINE && window.ONLINE.on && window.ONLINE.progress){ const s = window.ONLINE.progress.stage; return s ? BEASTS[s-1].name : "Loài gốc"; } const s = formStage(); return s ? BEASTS[s-1].name : "Loài gốc"; }
 
 function enterGame(fromReveal){
   if (fromReveal) $("revealOverlay").classList.add("hidden");
@@ -421,6 +436,7 @@ function buildNav(){
     '<button class="zbtn" data-map="' + m.id + '" onclick="travelTo(\'' + m.id + '\')"><img src="' + ART.zones[m.backdrop] + '"><span>' + m.name + "</span></button>").join("");
 }
 function travelTo(id){
+  if (window.ONLINE && window.ONLINE.on){ if (window.ONLINE.ws) window.ONLINE.ws.send(JSON.stringify({ type:"travel", map: id })); return; }
   if (curMap && curMap.id === id) return;
   closeEnc(); goMap(MAPBY[id], "travel");
 }
@@ -461,6 +477,7 @@ function goMap(map, arrive){
   }
 }
 function renderLayer(){
+  if (window.ONLINE && window.ONLINE.on){ renderOnline(); return; }
   const layer = $("encounterLayer"); layer.innerHTML = "";
   curTargets.forEach((c, i) => {
     const pos = POS[i % POS.length];
@@ -518,6 +535,7 @@ function doEatMore(){
   toast("🍖 Đã hồi phục +12 sinh lực"); closeEnc();
 }
 function doHunt(){
+  if (window.ONLINE && window.ONLINE.on) return;
   const c = currentEnc; if (!c) return;
   const tp = powerOf(c.blocks), mp = effPower();
   if (mp >= tp){
@@ -539,6 +557,7 @@ function doHunt(){
   }
 }
 function doFlee(){
+  if (window.ONLINE && window.ONLINE.on) return;
   const c = currentEnc;
   const wasStrong = c && powerOf(c.blocks) > effPower();
   closeEnc();
@@ -559,6 +578,7 @@ function randomEncounter(){
   openEncounter(pool[Math.floor(Math.random() * pool.length)], false);
 }
 function renderSuggestions(){
+  if (window.ONLINE && window.ONLINE.on){ renderOnlinePanel(); renderEvoOnline(); return; }
   const sorted = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
     .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks));
   const pool = [], usedA = new Set();
@@ -595,6 +615,7 @@ function renderCodex(){
 }
 /* ===== Panel tiến hoá + tìm loài theo bộ phận còn thiếu ===== */
 function renderEvo(){
+  if (window.ONLINE && window.ONLINE.on){ renderEvoOnline(); return; }
   const el = $("evoPanel"); if (!el || !prog || !me) return;
   const s = formStage();
   const cur = s > 0 ? BEASTS[s - 1] : null;
@@ -789,6 +810,128 @@ function startFx(){
 }
 
 renderLogin();
+</script>
+<script>
+/* ===== Che do ONLINE nhieu nguoi (WebSocket toi server/server.js) ===== */
+window.ONLINE = { on:false, ws:null, myId:null, name:"", players:[], npcs:[], power:0, progress:null };
+const ONLINE = window.ONLINE;
+let onlineTarget = null;
+function defaultSrvUrl(){
+  if (location.protocol === "http:" || location.protocol === "https:")
+    return (location.protocol === "https:" ? "wss://" : "ws://") + location.host;
+  return "ws://127.0.0.1:8788";
+}
+function toggleOnlinePanel(){ $("onlinePanel").classList.toggle("hidden"); }
+function connectOnline(){
+  const url = ($("srvUrl").value || "").trim() || defaultSrvUrl();
+  let name = ($("onlineName").value || "").trim();
+  if (!name){ const ni = $("nameInput"); if (ni && ni.value.trim()) name = ni.value.trim(); }
+  if (!name) name = (me ? me.name : "") || "Khách";
+  let ws;
+  try { ws = new WebSocket(url); } catch(e){ toast("Địa chỉ server không hợp lệ"); return; }
+  ONLINE.ws = ws; ONLINE.name = name;
+  toast("🌐 Đang kết nối " + url + " ...");
+  ws.onopen = () => ws.send(JSON.stringify({ type:"join", name }));
+  ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch(e){ return; } handleOnlineMsg(m); };
+  ws.onerror = () => toast("❌ Không nối được server — server đã chạy chưa? (xem MULTIPLAYER.md)");
+  ws.onclose = () => { if (ONLINE.on){ ONLINE.on = false; toast("🔌 Đã ngắt kết nối online"); } };
+}
+function disconnectOnline(){ if (ONLINE.ws) try { ONLINE.ws.close(); } catch(e){} ONLINE.on = false; location.reload(); }
+function handleOnlineMsg(m){
+  if (m.type === "welcome"){
+    ONLINE.on = true; ONLINE.myId = m.you.id; ONLINE.power = m.you.power; ONLINE.progress = m.you.progress;
+    me = { name: ONLINE.name, creature: creatureByTaxid(m.you.taxid) };
+    prog = { merges: m.you.merges, kills: m.you.kills, bonus: 0, hp: m.you.hp, mapId: m.map, absorbed: m.you.absorbed || [], log: [] };
+    $("loginScreen").classList.add("hidden");
+    const rv = $("revealOverlay"); if (rv) rv.classList.add("hidden");
+    $("stage").classList.remove("hidden");
+    $("onlinePanel").classList.add("hidden");
+    buildNav(); applyOnlineMap(m.map); updateHUD();
+    if (!window.__fxOn){ window.__fxOn = 1; startFx(); }
+    toast("🌐 Đã vào thế giới online! Sơn Hải Kinh chọn cho bạn: " + me.creature.disp, 3400);
+  }
+  else if (m.type === "state"){
+    if (!ONLINE.on) return;
+    ONLINE.players = m.players; ONLINE.npcs = m.npcs; ONLINE.power = m.you.power; ONLINE.progress = m.you.progress;
+    prog.hp = m.you.hp; prog.merges = m.you.merges; prog.kills = m.you.kills; prog.absorbed = m.you.absorbed || [];
+    if (me.creature.taxid !== m.you.taxid) me.creature = creatureByTaxid(m.you.taxid);
+    if (!curMap || m.map !== curMap.id) applyOnlineMap(m.map);
+    updateHUD(); renderOnline(); renderOnlinePanel(); renderEvoOnline();
+  }
+  else if (m.type === "result" || m.type === "event"){ toast(m.text, 3000); }
+  else if (m.type === "respawn"){ toast("♻️ " + m.text, 3600); }
+  else if (m.type === "evo"){ showEvo(me.creature, m.stage); }
+  else if (m.type === "win"){ showEnd(true); }
+}
+function applyOnlineMap(id){
+  curMap = MAPBY[id]; if (prog) prog.mapId = id;
+  $("zoneBg").src = ART.zones[curMap.backdrop];
+  $("zoneName").textContent = curMap.name + " " + curMap.han;
+  $("zoneDesc").textContent = curMap.desc;
+}
+function renderOnline(){
+  const layer = $("encounterLayer"); if (!layer) return;
+  layer.innerHTML = "";
+  (ONLINE.npcs || []).forEach(n => {
+    const c = creatureByTaxid(n.taxid);
+    const d = document.createElement("div");
+    d.className = "card"; d.style.left = n.x + "%"; d.style.top = n.y + "%";
+    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><div class="cap"><div class="vn">' + n.disp + '</div><div class="sci">' + n.sci + "</div></div>";
+    d.onclick = ev => { ev.stopPropagation(); onlineEncounter("npc", n); };
+    layer.appendChild(d);
+  });
+  (ONLINE.players || []).filter(p => p.id !== ONLINE.myId).forEach(p => {
+    const c = creatureByTaxid(p.taxid);
+    const d = document.createElement("div");
+    d.className = "card player"; d.style.left = p.x + "%"; d.style.top = p.y + "%";
+    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><span class="tick" style="background:#7a4d00">👤 ' + p.name + (p.stage ? " · Cấp " + p.stage : "") + '</span><div class="cap"><div class="vn">' + p.disp + '</div><div class="sci">' + p.sci + "</div></div>";
+    d.onclick = ev => { ev.stopPropagation(); onlineEncounter("player", p); };
+    layer.appendChild(d);
+  });
+}
+function onlineEncounter(kind, e){
+  onlineTarget = { kind, id: e.id };
+  const c = creatureByTaxid(e.taxid);
+  const myP = ONLINE.power || 0, tp = e.power || 0;
+  const cmp = tp <= myP * 0.85 ? "🟢 Yếu hơn bạn — săn được" : (tp <= myP * 1.15 ? "🟡 Ngang sức bạn" : "🔴 Mạnh hơn bạn — nên trốn!");
+  $("encPanel").innerHTML =
+    '<img src="' + (c ? artOf(c) : ART.login) + '">' +
+    '<div class="inf"><h3>' + (kind === "player" ? "👤 " + e.name + " — " : "") + e.disp + '</h3><div class="sci">' + e.sci + " · ⚔ Lực: " + tp + " · " + cmp + "</div>" +
+    '<div class="row"><button class="btn" onclick="onlineHunt()">⚔️ Săn</button>' +
+    '<button class="btn" onclick="onlineFlee()">🏃 Trốn</button>' +
+    '<button class="btn" onclick="closeEnc()">Đóng</button></div></div>';
+  $("encPanel").classList.remove("hidden");
+}
+function onlineHunt(){ if (onlineTarget && ONLINE.ws) ONLINE.ws.send(JSON.stringify({ type:"hunt", target: onlineTarget.id })); closeEnc(); }
+function onlineFlee(){ if (ONLINE.ws) ONLINE.ws.send(JSON.stringify({ type:"flee" })); closeEnc(); }
+function renderOnlinePanel(){
+  const el = $("sugList"); if (!el) return;
+  const others = (ONLINE.players || []).filter(p => p.id !== ONLINE.myId);
+  el.innerHTML = '<p style="font-size:12.5px;color:#cfe3c2;margin:2px 0 8px">🌐 Đang online tại <b>' + (curMap ? curMap.name : "") + '</b> — ' + (ONLINE.players || []).length + ' người chơi · ' + (ONLINE.npcs || []).length + ' sinh linh hoang dã.<br>Bấm vào thẻ trên map để săn · bấm nền map để di chuyển · bấm nút map bên dưới để sang map khác.</p>' +
+    others.map(p => { const c = creatureByTaxid(p.taxid); return '<div class="sug"><img src="' + (c ? artOf(c) : ART.login) + '"><div>👤 <b>' + p.name + '</b><br><span class="plus">' + p.disp + " · Lực " + p.power + (p.stage ? " · Cấp " + p.stage : "") + "</span></div></div>"; }).join("");
+}
+function renderEvoOnline(){
+  const el = $("evoPanel"); if (!el || !ONLINE.progress) return;
+  const pr = ONLINE.progress;
+  const cur = pr.stage > 0 ? BEASTS[pr.stage - 1] : null;
+  let h = '<p style="font-size:12.5px;margin:2px 0 6px">Hình dạng hiện tại: <b>' + (cur ? cur.name + " " + cur.han : "Nguyên hình (" + me.creature.disp + ")") + "</b> · Đã gộp " + prog.merges + " loài (online)</p>";
+  if (!pr.next){ el.innerHTML = h + '<p style="font-size:12.5px;color:#ffd76a;margin:2px 0">👑 Đã đạt đỉnh Ứng Long!</p>'; return; }
+  h += '<p style="font-size:12.5px;margin:2px 0 4px">Cấp tiếp theo: <b>' + pr.next + "</b> — cần gộp ≥ " + pr.mergesNeed + " loài (" + prog.merges + "/" + pr.mergesNeed + ") và đủ bộ phận:</p>";
+  pr.parts.forEach(p => {
+    h += '<div style="font-size:12.5px;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.08)">' + (p.ok ? "✅" : "⬜") + " <b>" + p.label + "</b> (" + p.n + "/" + p.need + ')<br><span style="color:#9fb894;font-size:11.5px">' + p.hint + "</span></div>";
+  });
+  el.innerHTML = h;
+}
+(function(){
+  const su = $("srvUrl"); if (su && !su.value) su.value = defaultSrvUrl();
+  const layer = $("encounterLayer");
+  if (layer) layer.addEventListener("click", ev => {
+    if (!ONLINE.on || ev.target !== layer) return;
+    const r = layer.getBoundingClientRect();
+    const x = Math.round((ev.clientX - r.left) / r.width * 100), y = Math.round((ev.clientY - r.top) / r.height * 100);
+    ONLINE.ws.send(JSON.stringify({ type:"move", x, y }));
+  });
+})();
 </script>
 </body>
 </html>

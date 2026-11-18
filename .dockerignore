@@ -1,0 +1,8 @@
+data/bulk/
+data/*.db*
+data/species_genes/
+data/tmp/
+tools/
+deploy/node_modules/
+server/node_modules/
+*.zip
