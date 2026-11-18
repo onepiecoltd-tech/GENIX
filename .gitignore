@@ -1,0 +1,19 @@
+# === KHÓA RIÊNG — TUYỆT ĐỐI KHÔNG ĐƯA LÊN GIT ===
+deploy/testnet-wallet.json
+deploy/token_vaults.json
+
+# === Dữ liệu lớn / tái tạo được từ nguồn gốc ===
+data/genechain_blocks.db
+data/genechain_blocks.db-*
+*.bak
+data/bulk/
+data/species_genes/
+data/tmp/
+ipfs_files/
+tools/
+*.zip
+
+# === Môi trường chạy ===
+deploy/node_modules/
+__pycache__/
+*.pyc
