@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Trái Đất Nguyên Thuỷ — GeneChain</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0b1f16; font-family:"Segoe UI", Arial, sans-serif; color:#e8f2e4; }
+  #gameCanvas { position:fixed; inset:0; display:block; }
+  .hidden { display:none !important; }
+
+  /* ===== Màn hình chọn loài ===== */
+  #startScreen { position:fixed; inset:0; overflow-y:auto; background:radial-gradient(1200px 700px at 50% -10%, #7a5d8f 0%, #2c5d3a 42%, #12291a 68%, #08170e 100%); padding:28px 16px 40px; z-index:30; }
+  #startScreen h1 { text-align:center; font-size:38px; letter-spacing:3px; color:#ffe9a8; text-shadow:0 0 22px rgba(255,215,106,.55), 0 2px 12px rgba(0,0,0,.6); }
+  #startScreen .sub { text-align:center; margin:10px auto 4px; max-width:820px; font-size:15px; line-height:1.55; color:#cfe3c2; }
+  #startScreen .sub b { color:#ffd76a; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; max-width:1180px; margin:20px auto 0; }
+  .card { background:rgba(10,30,18,.82); border:1px solid #3f7a4c; border-radius:12px; padding:12px 14px; cursor:pointer; transition:.15s; }
+  .card:hover { transform:translateY(-3px); border-color:#ffd76a; box-shadow:0 8px 22px rgba(0,0,0,.45); }
+  .card.plant { opacity:.75; cursor:default; }
+  .card.plant:hover { transform:none; border-color:#3f7a4c; box-shadow:none; }
+  .card .vn { font-size:17px; font-weight:700; color:#fff; }
+  .card .sci { font-style:italic; font-size:13px; color:#a9c79b; margin-bottom:6px; }
+  .card .row { font-size:12.5px; line-height:1.5; color:#d7e8cd; }
+  .card .row b { color:#ffd76a; font-weight:600; }
+  .card .genes { margin-top:6px; font-size:11.5px; color:#9fb894; line-height:1.45; word-break:break-word; }
+  .card .play { margin-top:8px; display:inline-block; background:#2e7d46; color:#fff; padding:5px 12px; border-radius:8px; font-size:13px; font-weight:600; }
+  .note { max-width:820px; margin:18px auto 0; font-size:12.5px; color:#8fae83; line-height:1.55; text-align:center; }
+
+  /* ===== HUD ===== */
+  #hud { position:fixed; top:10px; left:10px; z-index:10; background:rgba(6,22,12,.78); border:1px solid #3f7a4c; border-radius:12px; padding:10px 14px; min-width:250px; backdrop-filter:blur(3px); }
+  #hud .spname { font-size:16px; font-weight:700; color:#ffe9a8; }
+  #hud .spsci { font-style:italic; font-size:12px; color:#a9c79b; margin-bottom:6px; }
+  .bar { height:10px; background:#24382a; border-radius:6px; overflow:hidden; margin:3px 0 7px; }
+  .bar > div { height:100%; border-radius:6px; transition:width .25s; }
+  #hpFill { background:linear-gradient(90deg,#e05252,#f0836a); }
+  #hud .stat { font-size:12.5px; line-height:1.55; color:#d7e8cd; }
+  #hud .stat b { color:#ffd76a; }
+  #burnLine { color:#ffb27a; }
+
+  /* ===== Gợi ý + codex ===== */
+  #sidePanel { position:fixed; top:10px; right:10px; z-index:10; width:288px; max-height:calc(100% - 20px); overflow-y:auto; background:rgba(6,22,12,.78); border:1px solid #3f7a4c; border-radius:12px; padding:10px 12px; backdrop-filter:blur(3px); }
+  #sidePanel h3 { font-size:14px; color:#ffe9a8; margin:4px 0 8px; }
+  .sug { background:rgba(46,125,70,.18); border:1px solid #2e7d46; border-radius:9px; padding:7px 9px; margin-bottom:7px; cursor:pointer; font-size:12.5px; line-height:1.5; }
+  .sug:hover { border-color:#ffd76a; }
+  .sug b { color:#fff; }
+  .sug .plus { color:#8be08b; font-weight:700; }
+  .sug.targeted { border-color:#ffd76a; background:rgba(255,215,106,.14); }
+  #codexList { margin-top:6px; }
+  .cx { font-size:12.5px; padding:5px 7px; border-radius:7px; cursor:pointer; line-height:1.45; }
+  .cx:hover { background:rgba(255,255,255,.07); }
+  .cx .done { color:#8be08b; font-weight:700; }
+  .cx .sci { font-style:italic; color:#a9c79b; font-size:11.5px; }
+
+  /* ===== Chi tiết loài ===== */
+  #detailCard { position:fixed; left:10px; bottom:10px; z-index:11; width:330px; max-height:46%; overflow-y:auto; background:rgba(6,22,12,.88); border:1px solid #ffd76a; border-radius:12px; padding:12px 14px; }
+  #detailCard h3 { color:#ffe9a8; font-size:16px; }
+  #detailCard .sci { font-style:italic; color:#a9c79b; font-size:12.5px; margin-bottom:6px; }
+  #detailCard .row { font-size:12.5px; line-height:1.6; color:#d7e8cd; word-break:break-all; }
+  #detailCard .row b { color:#ffd76a; }
+  #detailCard .gene { display:inline-block; background:#1d4028; border:1px solid #3f7a4c; border-radius:6px; padding:1px 7px; margin:2px 2px 0 0; font-size:11.5px; }
+  #detailCard .close { float:right; cursor:pointer; color:#ffb27a; font-weight:700; padding:0 4px; }
+
+  /* ===== Modal tiến hoá / kết thúc ===== */
+  .modalWrap { position:fixed; inset:0; z-index:40; background:rgba(2,10,5,.72); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .modal { background:linear-gradient(180deg,#14301d,#0a1f12); border:1px solid #ffd76a; border-radius:16px; max-width:560px; width:100%; max-height:88%; overflow-y:auto; padding:22px 24px; box-shadow:0 18px 50px rgba(0,0,0,.6); }
+  .modal h2 { color:#ffe9a8; font-size:22px; margin-bottom:8px; }
+  .modal .sci { font-style:italic; color:#a9c79b; }
+  .modal p { font-size:14px; line-height:1.65; color:#d7e8cd; margin:7px 0; }
+  .modal p b { color:#ffd76a; }
+  .modal .root { font-family:Consolas,monospace; font-size:11.5px; word-break:break-all; background:#08170e; border:1px solid #3f7a4c; border-radius:8px; padding:7px 9px; color:#9fe8a9; }
+  .modal button { margin-top:14px; background:#2e7d46; color:#fff; border:none; padding:11px 22px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; }
+  .modal button:hover { background:#379754; }
+
+  #toast { position:fixed; top:76px; left:50%; transform:translateX(-50%); z-index:20; background:rgba(6,22,12,.9); border:1px solid #ffd76a; color:#ffe9a8; padding:9px 18px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .3s; pointer-events:none; text-align:center; max-width:92%; }
+  #help { position:fixed; bottom:10px; right:10px; z-index:9; font-size:12px; color:#b9d3ab; background:rgba(6,22,12,.7); padding:7px 11px; border-radius:9px; line-height:1.6; }
+  #errBox { position:fixed; inset:auto 10px 10px 10px; z-index:50; background:#5a1616; color:#ffd7d7; border:1px solid #ff8a8a; border-radius:10px; padding:12px 16px; font-size:13.5px; line-height:1.5; }
+  @media (max-width:760px){ #sidePanel{ width:225px; } #hud{ min-width:200px; } #detailCard{ width:calc(100% - 20px); } }
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+  <h1>🌍 TRÁI ĐẤT NGUYÊN THUỶ</h1>
+  <p class="sub">Game xây từ <b>dữ liệu gen thật</b> của GeneChain Block Registry (NCBI): 30 loài thật đang sống trên đảo.
+  Chọn một loài để bắt đầu. Săn và <b>gộp gen</b> của các loài khác vào bộ gen của bạn để tiến hoá thành loài lai mới —
+  game gợi ý loài nên săn dựa trên <b>số block gen thật</b> mà loài đó bổ sung cho bạn.</p>
+  <div class="grid" id="speciesGrid"></div>
+  <p class="note">Mọi con số (số gen, số block, Merkle root, block chung/block mới khi gộp) đều trích thật từ registry 32,7 nghìn loài của GeneChain.
+  Riêng các loài cây (lúa, ngô, cải Arabidopsis) là thực vật: không chọn làm loài khởi đầu được, hãy tới khóm cây để thu thập gen của chúng.</p>
+</div>
+
+<canvas id="gameCanvas" class="hidden"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="spname" id="hudName">—</div>
+  <div class="spsci" id="hudSci">—</div>
+  <div style="font-size:12px;">Sinh lực</div>
+  <div class="bar"><div id="hpFill" style="width:100%"></div></div>
+  <div class="stat">🧬 Bộ gen hợp nhất: <b id="hudUnion">0</b> block</div>
+  <div class="stat">🔗 Đã gộp: <b id="hudMerged">0/15</b> loài · Săn thành công: <b id="hudKills">0</b></div>
+  <div class="stat" id="burnLine">🔥 GNCH đốt mô phỏng: <b id="hudBurn">0</b> (cung thật hiện tại: 999.999.895)</div>
+</div>
+
+<div id="sidePanel" class="hidden">
+  <h3>🎯 Gợi ý săn để tiến hoá</h3>
+  <div id="sugList"></div>
+  <h3>📖 Chú giải loài (dữ liệu thật)</h3>
+  <div id="codexList"></div>
+</div>
+
+<div id="detailCard" class="hidden"></div>
+<div id="toast"></div>
+<div id="help" class="hidden">Di chuyển: <b>W A S D</b> / phím mũi tên · Tăng tốc: <b>Shift</b><br>Săn: chạm vào con mồi nhỏ hơn · Né loài lớn hơn bạn!</div>
+<div id="evoModal" class="modalWrap hidden"><div class="modal" id="evoContent"></div></div>
+<div id="endModal" class="modalWrap hidden"><div class="modal" id="endContent"></div></div>
+
+<script>
+"use strict";
+const DATA = /*__GAME_DATA__*/;
+const SP = DATA.species;
+const PR = DATA.pair_roots;
+const GROUP_VN = { thu:"Động vật có vú", chim:"Chim", ca:"Cá", bo_sat:"Bò sát", luong_cu:"Lưỡng cư", con_trung:"Côn trùng / không xương sống", thuc_vat:"Thực vật" };
+/* Giải mã bitset tập block của từng loài; U(mask) = số block hợp CHÍNH XÁC của tổ hợp loài trong mask (tính từ dữ liệu thật) */
+SP.forEach(sp => {
+  const bin = atob(sp.bits);
+  const bytes = new Uint8Array(Math.ceil(bin.length / 4) * 4);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  sp.words = new Uint32Array(bytes.buffer);
+  delete sp.bits;
+});
+const _ucache = new Map();
+function U(m){
+  if (_ucache.has(m)) return _ucache.get(m);
+  const acc = new Uint32Array(SP[0].words.length);
+  SP.forEach(sp => { if (m & (1 << sp.idx)){ const w = sp.words; for (let i = 0; i < w.length; i++) acc[i] |= w[i]; } });
+  let c = 0;
+  for (let i = 0; i < acc.length; i++){ let x = acc[i]; x = x - ((x >> 1) & 0x55555555); x = (x & 0x33333333) + ((x >> 2) & 0x33333333); c += (((x + (x >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24; }
+  _ucache.set(m, c);
+  return c;
+}
+const fmt = n => n.toLocaleString("vi-VN");
+function showErr(msg){ const b=document.createElement("div"); b.id="errBox"; b.textContent=msg; document.body.appendChild(b); }
+
+/* ================= Màn hình chọn loài ================= */
+const grid = document.getElementById("speciesGrid");
+SP.forEach(sp => {
+  const card = document.createElement("div");
+  card.className = "card" + (sp.model === "plant" ? " plant" : "");
+  card.innerHTML =
+    '<div class="vn">' + sp.vn + '</div><div class="sci">' + sp.name + ' · ' + GROUP_VN[sp.group] + '</div>' +
+    '<div class="row">🧬 <b>' + fmt(sp.genes) + '</b> gen · <b>' + fmt(sp.blocks) + '</b> block</div>' +
+    '<div class="row">Merkle root: ' + sp.root.slice(0, 18) + '…</div>' +
+    '<div class="genes">Gen tiêu biểu: ' + sp.sample_genes.slice(0, 5).map(g => g.symbol).join(", ") + '…</div>' +
+    (sp.model === "plant" ? '<div class="row" style="margin-top:8px;color:#9fb894">🌾 Nguồn gen thu thập trên đảo</div>'
+                          : '<span class="play">▶ Chơi loài này</span>');
+  if (sp.model !== "plant") card.onclick = () => startGame(sp.idx);
+  grid.appendChild(card);
+});
+</script>
+<script>
+"use strict";
+/* ================= GAME 3D ================= */
+let renderer, scene, camera, clock;
+let player = null, playerIdx = -1, mask = 0, hp = 100, kills = 0, burnSim = 0, merges = 0;
+let startTime = 0, running = false, dead = false, targetedIdx = -1, firstPairRoot = null;
+let creatures = [], patches = [], keys = {}, camYaw = 0, biteCd = 0, collectCd = 0;
+const WORLD_R = 118;
+
+function heightAt(x, z){
+  const r = Math.hypot(x, z);
+  let h = 1.5*Math.sin(x*0.045)*Math.cos(z*0.05) + 1.0*Math.sin(x*0.013+1.7)*Math.sin(z*0.017+0.6);
+  h += Math.max(0, 1 - r/150) * 2.0;
+  return h;
+}
+function toast(msg, ms){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, ms || 2600);
+}
+function popcount(m){ let c=0; while(m){ c += m & 1; m >>= 1; } return c; }
+
+function makeLabel(text, color){
+  const cv = document.createElement("canvas"); cv.width = 512; cv.height = 96;
+  const g = cv.getContext("2d");
+  g.font = "bold 44px Segoe UI, Arial"; g.textAlign = "center";
+  g.shadowColor = "rgba(0,0,0,.85)"; g.shadowBlur = 10;
+  g.fillStyle = color || "#ffffff"; g.fillText(text, 256, 58);
+  const tex = new THREE.CanvasTexture(cv);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  spr.scale.set(13, 2.45, 1);
+  return spr;
+}
+function mat(color){ return new THREE.MeshLambertMaterial({ color: color }); }
+function box(w,h,d,color){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat(color)); return m; }
+function sph(rx,ry,rz,color){ const m = new THREE.Mesh(new THREE.SphereGeometry(1,14,12), mat(color)); m.scale.set(rx,ry,rz); return m; }
+function cyl(rt,rb,h,color){ return new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,10), mat(color)); }
+function cone(r,h,color){ return new THREE.Mesh(new THREE.ConeGeometry(r,h,10), mat(color)); }
+
+/* --- Dựng mô hình theo nhóm loài (khối tượng trưng) --- */
+function buildModel(sp){
+  const g = new THREE.Group();
+  const c = new THREE.Color(sp.color), dark = c.clone().multiplyScalar(0.72).getHex();
+  const anim = { legs: [], wings: [], tail: null };
+  const s = 0.55 + sp.size * 0.42;
+  if (sp.model === "quadruped"){
+    const body = sph(1.5, 1.0, 0.95, sp.color); body.position.y = 1.15; g.add(body);
+    const head = sph(0.62, 0.55, 0.6, sp.color); head.position.set(1.55, 1.5, 0); g.add(head);
+    const snout = box(0.55, 0.34, 0.5, dark); snout.position.set(2.1, 1.38, 0); g.add(snout);
+    [[1.0,0.5],[1.0,-0.5],[-1.0,0.5],[-1.0,-0.5]].forEach(p => {
+      const leg = cyl(0.13, 0.11, 1.05, dark); leg.position.set(p[0], 0.55, p[1]); g.add(leg); anim.legs.push(leg);
+    });
+    const tail = cyl(0.05, 0.1, 0.9, dark); tail.position.set(-1.65, 1.35, 0); tail.rotation.z = 1.0; g.add(tail); anim.tail = tail;
+    const ear1 = cone(0.16, 0.3, dark); ear1.position.set(1.4, 2.0, 0.3); g.add(ear1);
+    const ear2 = cone(0.16, 0.3, dark); ear2.position.set(1.4, 2.0, -0.3); g.add(ear2);
+  } else if (sp.model === "bird"){
+    const upright = sp.taxid === 9233;
+    const body = sph(0.85, upright ? 1.25 : 0.8, 0.8, sp.color); body.position.y = upright ? 1.25 : 1.0; g.add(body);
+    if (upright){ const belly = sph(0.68, 1.0, 0.6, "#f2f2ea"); belly.position.set(0.18, 1.2, 0); g.add(belly); }
+    const head = sph(0.42, 0.4, 0.4, upright ? "#2c3540" : sp.color); head.position.set(upright ? 0.1 : 0.8, upright ? 2.75 : 1.75, 0); g.add(head);
+    const beak = cone(0.14, 0.5, "#e8a33d"); beak.rotation.z = -Math.PI/2; beak.position.set(upright ? 0.45 : 1.3, upright ? 2.7 : 1.7, 0); g.add(beak);
+    [-1, 1].forEach(sd => {
+      const wing = box(0.95, 0.08, 0.5, dark); wing.position.set(-0.1, 1.35, sd * 0.85);
+      wing.geometry.translate(0, 0, sd * 0.45); g.add(wing); anim.wings.push(wing);
+      const leg = cyl(0.05, 0.05, 0.6, "#c98a3d"); leg.position.set(0.15, 0.3, sd * 0.3); g.add(leg); anim.legs.push(leg);
+    });
+    const tail = box(0.6, 0.07, 0.5, dark); tail.position.set(-0.95, 1.15, 0); tail.rotation.z = 0.35; g.add(tail); anim.tail = tail;
+    if (sp.taxid === 9031){ const comb = box(0.3, 0.22, 0.08, "#d94f4f"); comb.position.set(0.82, 2.2, 0); g.add(comb); }
+  } else if (sp.model === "fish"){
+    const body = sph(1.25, 0.5, 0.42, sp.color); body.position.y = 0.55; g.add(body);
+    const tail = cone(0.5, 0.8, dark); tail.rotation.z = Math.PI/2; tail.position.set(-1.55, 0.55, 0); tail.scale.z = 0.25; g.add(tail); anim.tail = tail;
+    const fin = cone(0.3, 0.55, dark); fin.position.set(0.1, 1.15, 0); fin.scale.z = 0.3; g.add(fin);
+    const eye = sph(0.09, 0.09, 0.09, "#101010"); eye.position.set(0.95, 0.7, 0.35); g.add(eye);
+    const eye2 = eye.clone(); eye2.position.z = -0.35; g.add(eye2);
+    if (sp.taxid === 7955){ for (let i = -2; i <= 2; i++){ const st = box(0.14, 0.95, 0.86, "#33526e"); st.position.set(i * 0.42, 0.55, 0); g.add(st); } }
+  } else if (sp.model === "reptile"){
+    const turtle = sp.taxid === 8478;
+    const body = sph(1.6, turtle ? 0.62 : 0.5, 0.95, sp.color); body.position.y = turtle ? 0.62 : 0.5; g.add(body);
+    if (turtle){ const shell = sph(1.35, 0.55, 0.85, "#7a9a4d"); shell.position.y = 0.85; g.add(shell); }
+    const head = sph(0.45, 0.34, 0.36, sp.color); head.position.set(1.95, 0.55, 0); g.add(head);
+    const jaw = box(0.6, 0.12, 0.4, dark); jaw.position.set(2.15, 0.38, 0); g.add(jaw);
+    const tail = cyl(0.06, 0.2, 1.7, dark); tail.position.set(-2.3, 0.5, 0); tail.rotation.z = Math.PI/2 - 0.15; g.add(tail); anim.tail = tail;
+    [[1.0,0.62],[1.0,-0.62],[-1.0,0.62],[-1.0,-0.62]].forEach(p => {
+      const leg = cyl(0.11, 0.09, 0.5, dark); leg.position.set(p[0], 0.25, p[1]); g.add(leg); anim.legs.push(leg);
+    });
+    if (sp.taxid === 28377){ const crest = cone(0.3, 0.5, "#d9704f"); crest.position.set(0.2, 1.0, 0); crest.scale.z = 0.25; g.add(crest); }
+  } else if (sp.model === "insect"){
+    if (sp.taxid === 7091 || sp.taxid === 6239){
+      for (let i = 0; i < 5; i++){ const seg = sph(0.32 - i * 0.02, 0.26, 0.28, sp.color); seg.position.set(-0.6 + i * 0.32, 0.3, 0); g.add(seg); }
+      const head = sph(0.2, 0.2, 0.2, "#cbb98a"); head.position.set(0.85, 0.32, 0); g.add(head);
+    } else {
+      const body = sph(0.55, 0.4, 0.4, sp.color); body.position.y = 0.6; g.add(body);
+      const head = sph(0.26, 0.24, 0.24, dark); head.position.set(0.6, 0.65, 0); g.add(head);
+      if (sp.taxid === 7460){ [-0.25, 0.05, 0.35].forEach(x => { const st = box(0.13, 0.78, 0.8, "#3a3230"); st.position.set(x, 0.6, 0); g.add(st); }); }
+      [-1, 1].forEach(sd => {
+        const wing = sph(0.5, 0.05, 0.28, "#e8f4ff"); wing.position.set(-0.1, 0.95, sd * 0.35); g.add(wing); anim.wings.push(wing);
+      });
+    }
+  }
+  g.scale.setScalar(s);
+  g.userData.anim = anim;
+  g.userData.baseScale = s;
+  return g;
+}
+
+function spawnCreature(spIdx, isPlayer){
+  const sp = SP[spIdx];
+  const grp = buildModel(sp);
+  let x, z;
+  if (isPlayer){ x = 0; z = 24; }
+  else if (sp.model === "fish"){ const a = Math.random()*Math.PI*2, r = 8 + Math.random()*16; x = 46 + Math.cos(a)*r; z = 34 + Math.sin(a)*r; }
+  else { const a = Math.random()*Math.PI*2, r = 18 + Math.random()*82; x = Math.cos(a)*r; z = Math.sin(a)*r; }
+  grp.position.set(x, 0, z);
+  const label = makeLabel(sp.vn, isPlayer ? "#ffd76a" : "#ffffff");
+  label.position.y = (sp.model === "insect" ? 2.2 : 3.4) * (0.55 + sp.size*0.42);
+  grp.add(label);
+  if (isPlayer){
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.0, 32), new THREE.MeshBasicMaterial({ color: 0xffd76a, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
+    ring.rotation.x = -Math.PI/2; ring.position.y = 0.06; grp.add(ring);
+  }
+  scene.add(grp);
+  const c = { grp, spIdx, heading: Math.random()*Math.PI*2, speed: 0, wanderT: 0, isPlayer: !!isPlayer,
+              fly: sp.model === "insect" && sp.taxid !== 7091 && sp.taxid !== 6239, baseY: 0, biteT: 0 };
+  creatures.push(c);
+  return c;
+}
+
+function buildWorld(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xa8c8d8);
+  scene.fog = new THREE.Fog(0xbcd3d9, 95, 430);
+  camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 900);
+  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gameCanvas"), antialias: true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  scene.add(new THREE.HemisphereLight(0xd8ecff, 0x3a5f2f, 0.85));
+  const sun = new THREE.DirectionalLight(0xffdf9e, 0.95); sun.position.set(70, 95, 25); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x9fd8c9, 0.3); fill.position.set(-50, 40, -60); scene.add(fill);
+
+  // Mặt đất đảo
+  const geo = new THREE.PlaneGeometry(300, 300, 96, 96);
+  geo.rotateX(-Math.PI/2);
+  const pos = geo.attributes.position, colors = [];
+  const cSand = new THREE.Color(0xc2b280), cGrass = new THREE.Color(0x5d8f46), cRock = new THREE.Color(0x7d8471);
+  for (let i = 0; i < pos.count; i++){
+    const x = pos.getX(i), z = pos.getZ(i), r = Math.hypot(x, z);
+    let h = heightAt(x, z);
+    if (r > 128) h = -2.5 - (r - 128) * 0.12;
+    pos.setY(i, h);
+    const c = h < 0.4 ? cSand : (h > 3.4 ? cRock : cGrass);
+    colors.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  scene.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true })));
+
+  // Biển bao quanh
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshLambertMaterial({ color: 0x1d6f8e, transparent: true, opacity: 0.88 }));
+  sea.rotation.x = -Math.PI/2; sea.position.y = -1.4; scene.add(sea);
+  // Hồ trên đảo (nơi cá sống)
+  const lake = new THREE.Mesh(new THREE.CircleGeometry(27, 36), new THREE.MeshLambertMaterial({ color: 0x2b84a8, transparent: true, opacity: 0.85 }));
+  lake.rotation.x = -Math.PI/2; lake.position.set(46, heightAt(46, 34) + 0.25, 34); scene.add(lake);
+
+  // Núi lửa
+  const vol = cone(17, 22, 0x6b5a4a); vol.position.set(-58, heightAt(-58, -58) + 9, -58); scene.add(vol);
+  const crater = new THREE.Mesh(new THREE.CircleGeometry(5.5, 20), new THREE.MeshBasicMaterial({ color: 0xff6a33 }));
+  crater.rotation.x = -Math.PI/2; crater.position.set(-58, heightAt(-58, -58) + 20.1, -58); scene.add(crater);
+
+  // Cây dương xỉ + cây thân gỗ
+  for (let i = 0; i < 70; i++){
+    const a = Math.random()*Math.PI*2, r = 12 + Math.random()*100, x = Math.cos(a)*r, z = Math.sin(a)*r;
+    if (Math.hypot(x - 46, z - 34) < 30 || Math.hypot(x + 58, z + 58) < 20) continue;
+    const t = new THREE.Group();
+    const trunk = cyl(0.22, 0.34, 2.6 + Math.random()*1.6, 0x6e5136); trunk.position.y = 1.4; t.add(trunk);
+    const top = cone(1.7 + Math.random(), 3.4 + Math.random()*1.6, Math.random() > 0.5 ? 0x3e7d3a : 0x4c9448);
+    top.position.y = 4.4; t.add(top);
+    const top2 = cone(1.2 + Math.random()*0.7, 2.4, 0x57a34e); top2.position.y = 6.1; t.add(top2);
+    t.position.set(x, heightAt(x, z), z);
+    t.rotation.y = Math.random()*Math.PI;
+    scene.add(t);
+  }
+  for (let i = 0; i < 26; i++){
+    const a = Math.random()*Math.PI*2, r = 10 + Math.random()*102, x = Math.cos(a)*r, z = Math.sin(a)*r;
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + Math.random()*1.5), mat(0x8a8d84));
+    rock.position.set(x, heightAt(x, z) + 0.3, z); rock.rotation.set(Math.random(), Math.random(), Math.random());
+    scene.add(rock);
+  }
+  // Khóm cây — nguồn gen thực vật cho mọi loài plant trong dữ liệu
+  const plantSpots = { 39947: [[20, -30], [-28, 42], [64, -8]], 4577: [[-45, -15], [30, 55]], 3702: [[12, 70], [-8, -62]] };
+  SP.filter(s => s.model === "plant").forEach(sp => {
+    (plantSpots[sp.taxid] || [[0, -50]]).forEach(p => {
+      const patch = new THREE.Group();
+      for (let i = 0; i < 42; i++){
+        const st = box(0.09, 1.5 + Math.random()*0.7, 0.09, sp.color);
+        st.position.set((Math.random()-0.5)*9, 0.8, (Math.random()-0.5)*9);
+        st.rotation.z = (Math.random()-0.5)*0.25; patch.add(st);
+        const tip = sph(0.16, 0.3, 0.16, 0xe8d98a); tip.position.set(st.position.x, 1.8, st.position.z); patch.add(tip);
+      }
+      patch.position.set(p[0], heightAt(p[0], p[1]), p[1]);
+      const label = makeLabel("🌾 " + sp.vn + " — nguồn gen", "#ffe9a8"); label.position.y = 4.4; patch.add(label);
+      scene.add(patch);
+      patches.push({ x: p[0], z: p[1], spIdx: sp.idx, harvested: false });
+    });
+  });
+  buildScenery();
+}
+
+/* ================= Bối cảnh tiên hiệp ================= */
+const FX = { clouds: [], floaters: [], falls: [], crystals: [], lotus: [], petals: null, motes: null, ring: null };
+function glowTexture(inner, outer){
+  const cv = document.createElement("canvas"); cv.width = cv.height = 128;
+  const g = cv.getContext("2d");
+  const gr = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+  gr.addColorStop(0, inner); gr.addColorStop(1, outer);
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(cv);
+}
+function buildScenery(){
+  // Vòm trời chuyển sắc hoàng hôn tiên giới
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(430, 24, 16), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: {},
+    vertexShader: "varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 top = vec3(0.13, 0.28, 0.48); vec3 mid = vec3(0.55, 0.72, 0.82); vec3 hor = vec3(1.0, 0.82, 0.58); vec3 c = h > 0.25 ? mix(mid, top, smoothstep(0.25, 0.85, h)) : mix(hor, mid, smoothstep(-0.05, 0.25, h)); gl_FragColor = vec4(c, 1.0); }"
+  }));
+  scene.add(sky);
+  // Mặt trời + hào quang, mặt trăng, sao
+  const sunSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture("rgba(255,236,180,1)", "rgba(255,180,80,0)"), transparent: true, depthWrite: false, fog: false }));
+  sunSpr.scale.set(150, 150, 1); sunSpr.position.set(230, 165, -140); scene.add(sunSpr);
+  const moonSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture("rgba(235,245,255,1)", "rgba(160,200,255,0)"), transparent: true, depthWrite: false, fog: false }));
+  moonSpr.scale.set(60, 60, 1); moonSpr.position.set(-260, 190, -200); scene.add(moonSpr);
+  const starGeo = new THREE.BufferGeometry(); const starPos = [];
+  for (let i = 0; i < 700; i++){ const a = Math.random()*Math.PI*2, e = 0.25 + Math.random()*1.2, r = 410; starPos.push(Math.cos(a)*Math.cos(e)*r, Math.sin(e)*r, Math.sin(a)*Math.cos(e)*r); }
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xdceeff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.75, fog: false })));
+  // Dãy núi xa tầng tầng trong sương
+  for (let i = 0; i < 13; i++){
+    const a = (i / 13) * Math.PI * 2 + Math.random() * 0.3, r = 265 + Math.random() * 55;
+    const m = cone(34 + Math.random() * 30, 60 + Math.random() * 55, i % 2 ? 0x51707c : 0x62828a);
+    m.position.set(Math.cos(a) * r, 8, Math.sin(a) * r); scene.add(m);
+  }
+  // Biển mây trôi quanh đảo
+  const cloudTex = glowTexture("rgba(255,255,255,0.85)", "rgba(255,255,255,0)");
+  for (let i = 0; i < 30; i++){
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: 0.28 + Math.random() * 0.3, depthWrite: false }));
+    const a = Math.random() * Math.PI * 2, r = 95 + Math.random() * 130;
+    spr.position.set(Math.cos(a) * r, 4 + Math.random() * 26, Math.sin(a) * r);
+    spr.scale.set(55 + Math.random() * 70, 16 + Math.random() * 14, 1);
+    spr.userData = { a, r, y: spr.position.y, sp: 0.004 + Math.random() * 0.008 };
+    scene.add(spr); FX.clouds.push(spr);
+  }
+  // Đảo bay + thác nước đổ xuống biển mây
+  const fallCv = document.createElement("canvas"); fallCv.width = 32; fallCv.height = 128;
+  const fg = fallCv.getContext("2d"); fg.fillStyle = "rgba(190,230,255,0.25)"; fg.fillRect(0, 0, 32, 128);
+  fg.fillStyle = "rgba(255,255,255,0.75)";
+  for (let i = 0; i < 26; i++) fg.fillRect(Math.random() * 30, Math.random() * 128, 1.6, 12 + Math.random() * 26);
+  const fallTexBase = new THREE.CanvasTexture(fallCv); fallTexBase.wrapS = fallTexBase.wrapT = THREE.RepeatWrapping;
+  [[-95, 46, -40], [88, 58, -72], [-38, 66, 96], [112, 40, 52], [30, 78, -112], [-118, 34, 30]].forEach((p, k) => {
+    const grp = new THREE.Group();
+    const rock = cone(11 + (k % 3) * 2.5, 13, 0x6f6258); rock.rotation.x = Math.PI; rock.position.y = -5; grp.add(rock);
+    const top = new THREE.Mesh(new THREE.CircleGeometry(10 + (k % 3) * 2.2, 18), mat(0x5d8f46)); top.rotation.x = -Math.PI/2; top.position.y = 1.4; grp.add(top);
+    const trunk = cyl(0.3, 0.45, 3.4, 0x6e5136); trunk.position.y = 3.2; grp.add(trunk);
+    const canopy = sph(2.6, 1.9, 2.6, 0x4c9448); canopy.position.y = 5.8; grp.add(canopy);
+    const crys = new THREE.Mesh(new THREE.OctahedronGeometry(1.1), new THREE.MeshPhongMaterial({ color: 0x9fe8ff, emissive: 0x3d9bc4, emissiveIntensity: 0.8, shininess: 60 }));
+    crys.position.set(3.5, 2.6, 1.5); grp.add(crys); FX.crystals.push(crys);
+    const ft = fallTexBase.clone(); ft.needsUpdate = true; ft.repeat.set(1, 2.2);
+    const fall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, p[1] + 8), new THREE.MeshBasicMaterial({ map: ft, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false }));
+    fall.position.y = -(p[1] / 2) - 8; grp.add(fall); FX.falls.push(ft);
+    const fall2 = fall.clone(); fall2.rotation.y = Math.PI / 2; grp.add(fall2);
+    grp.position.set(p[0], p[1], p[2]);
+    grp.userData = { baseY: p[1], ph: k * 1.37 };
+    scene.add(grp); FX.floaters.push(grp);
+  });
+  // Cây thần cổ thụ khổng lồ
+  const god = new THREE.Group();
+  const gTrunk = cyl(2.6, 4.2, 17, 0x5d4630); gTrunk.position.y = 8.5; god.add(gTrunk);
+  [[5, 0], [-5, 0], [0, 5], [0, -5]].forEach(p => { const root = cone(1.6, 6, 0x5d4630); root.position.set(p[0], 1.5, p[1]); root.rotation.z = p[0] ? Math.sign(p[0]) * 0.7 : 0; root.rotation.x = p[1] ? -Math.sign(p[1]) * 0.7 : 0; god.add(root); });
+  [[0, 21, 0, 8.5], [6, 18.5, 2, 6], [-6, 19, -2, 6.4], [2, 18, -6, 5.4], [-3, 18.4, 6, 5.6]].forEach(c => {
+    const can = sph(c[3], c[3] * 0.62, c[3], 0x3f7d3c); can.position.set(c[0], c[1], c[2]); god.add(can);
+  });
+  for (let i = 0; i < 16; i++){
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
+    const a = Math.random() * Math.PI * 2, rr = 4 + Math.random() * 6;
+    orb.position.set(Math.cos(a) * rr, 13.5 + Math.random() * 4.5, Math.sin(a) * rr); god.add(orb);
+  }
+  god.position.set(-26, heightAt(-26, -6), -6); scene.add(god);
+  // Cây linh đào — hoa rơi
+  const spiritTrees = [[52, -42], [-64, 38], [8, -78]];
+  spiritTrees.forEach(p => {
+    const tr = new THREE.Group();
+    const tk = cyl(0.5, 0.8, 5.5, 0x4f3a2c); tk.position.y = 2.7; tr.add(tk);
+    [[0, 7, 0, 3.6], [2.2, 6, 1, 2.6], [-2, 6.2, -1.2, 2.4]].forEach(c => {
+      const can = new THREE.Mesh(new THREE.SphereGeometry(c[3], 12, 10), new THREE.MeshPhongMaterial({ color: 0xe8a7bf, emissive: 0x8a4460, emissiveIntensity: 0.35 }));
+      can.scale.y = 0.66; can.position.set(c[0], c[1], c[2]); tr.add(can);
+    });
+    tr.position.set(p[0], heightAt(p[0], p[1]), p[1]); scene.add(tr);
+  });
+  const petGeo = new THREE.BufferGeometry(); const petPos = [], petSeed = [];
+  for (let i = 0; i < 260; i++){
+    const c = spiritTrees[i % 3];
+    petPos.push(c[0] + (Math.random()-0.5) * 13, Math.random() * 9 + 1, c[1] + (Math.random()-0.5) * 13);
+    petSeed.push(Math.random() * 10);
+  }
+  petGeo.setAttribute("position", new THREE.Float32BufferAttribute(petPos, 3));
+  FX.petals = new THREE.Points(petGeo, new THREE.PointsMaterial({ color: 0xffc4d6, size: 0.55, transparent: true, opacity: 0.9, depthWrite: false }));
+  FX.petals.userData = { seed: petSeed, centers: spiritTrees };
+  scene.add(FX.petals);
+  // Tinh thể linh thạch trên đảo chính
+  [[16, 18], [-40, -44], [74, 20], [-12, 52], [38, -62]].forEach((p, k) => {
+    for (let i = 0; i < 4; i++){
+      const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.7 + Math.random() * 0.9),
+        new THREE.MeshPhongMaterial({ color: k % 2 ? 0xd9b8ff : 0x9fe8ff, emissive: k % 2 ? 0x7a4fc4 : 0x3d9bc4, emissiveIntensity: 0.75, shininess: 60 }));
+      cr.position.set(p[0] + (Math.random()-0.5) * 4, heightAt(p[0], p[1]) + 0.8, p[1] + (Math.random()-0.5) * 4);
+      cr.rotation.y = Math.random() * 3; scene.add(cr); FX.crystals.push(cr);
+    }
+  });
+  // Cổng thiên môn đá cổ + vòng linh quang
+  const gate = new THREE.Group();
+  [-4.2, 4.2].forEach(x => { const pil = box(1.5, 13, 1.5, 0x8a8d84); pil.position.set(x, 6.5, 0); gate.add(pil); });
+  const beam = box(11.5, 1.6, 1.9, 0x7d8078); beam.position.y = 13.4; gate.add(beam);
+  const beam2 = box(8.5, 1.1, 1.6, 0x7d8078); beam2.position.y = 10.8; gate.add(beam2);
+  FX.ring = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.16, 10, 42), new THREE.MeshBasicMaterial({ color: 0xffd76a, transparent: true, opacity: 0.85 }));
+  FX.ring.position.y = 6.4; gate.add(FX.ring);
+  gate.position.set(0, heightAt(0, -72), -72); scene.add(gate);
+  // Hoa sen trên hồ
+  for (let i = 0; i < 12; i++){
+    const lot = new THREE.Group();
+    const leaf = new THREE.Mesh(new THREE.CircleGeometry(0.9 + Math.random() * 0.5, 10), mat(0x3e7d46));
+    leaf.rotation.x = -Math.PI/2; lot.add(leaf);
+    if (i % 2 === 0){ const bud = cone(0.42, 0.85, 0xf2a7c3); bud.position.y = 0.45; lot.add(bud); }
+    const a = Math.random() * Math.PI * 2, rr = 4 + Math.random() * 19;
+    lot.position.set(46 + Math.cos(a) * rr, heightAt(46, 34) + 0.42, 34 + Math.sin(a) * rr);
+    lot.userData = { ph: i * 0.9, y: lot.position.y };
+    scene.add(lot); FX.lotus.push(lot);
+  }
+  // Dung nham chảy trên núi lửa
+  for (let i = 0; i < 3; i++){
+    const lava = box(0.9, 15, 0.3, 0xff7a33); lava.material = new THREE.MeshBasicMaterial({ color: 0xff8a44 });
+    const a = i * 2.1 + 0.6;
+    lava.position.set(-58 + Math.cos(a) * 7.5, heightAt(-58, -58) + 13.5, -58 + Math.sin(a) * 7.5);
+    lava.rotation.z = Math.cos(a) * 0.62; lava.rotation.x = -Math.sin(a) * 0.62;
+    scene.add(lava);
+  }
+  // Linh khí — hạt sáng lơ lửng khắp đảo
+  const moteGeo = new THREE.BufferGeometry(); const motePos = [];
+  for (let i = 0; i < 520; i++){
+    const a = Math.random() * Math.PI * 2, rr = Math.random() * 115;
+    const x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    motePos.push(x, heightAt(x, z) + 0.6 + Math.random() * 6.5, z);
+  }
+  moteGeo.setAttribute("position", new THREE.Float32BufferAttribute(motePos, 3));
+  FX.motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ color: 0xffe9a8, size: 0.5, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(FX.motes);
+}
+function animateScenery(dt, t){
+  for (const c of FX.clouds){
+    c.userData.a += c.userData.sp * dt;
+    c.position.x = Math.cos(c.userData.a) * c.userData.r;
+    c.position.z = Math.sin(c.userData.a) * c.userData.r;
+    c.position.y = c.userData.y + Math.sin(t * 0.24 + c.userData.r) * 1.1;
+  }
+  for (const f of FX.floaters){ f.position.y = f.userData.baseY + Math.sin(t * 0.45 + f.userData.ph) * 1.6; f.rotation.y = Math.sin(t * 0.1 + f.userData.ph) * 0.14; }
+  for (const ft of FX.falls) ft.offset.y -= dt * 0.55;
+  for (const cr of FX.crystals) cr.material.emissiveIntensity = 0.6 + Math.sin(t * 2.1 + cr.position.x) * 0.3;
+  for (const l of FX.lotus) l.position.y = l.userData.y + Math.sin(t * 1.3 + l.userData.ph) * 0.12;
+  if (FX.ring) FX.ring.rotation.z = t * 0.5;
+  if (FX.petals){
+    const pos = FX.petals.geometry.attributes.position, seed = FX.petals.userData.seed, centers = FX.petals.userData.centers;
+    for (let i = 0; i < pos.count; i++){
+      let y = pos.getY(i) - dt * (0.55 + (seed[i] % 0.5));
+      pos.setX(i, pos.getX(i) + Math.sin(t * 1.4 + seed[i]) * dt * 0.9);
+      if (y < 0.2){ const c = centers[i % 3]; y = 8 + Math.random() * 2; pos.setX(i, c[0] + (Math.random()-0.5) * 13); pos.setZ(i, c[1] + (Math.random()-0.5) * 13); }
+      pos.setY(i, y);
+    }
+    pos.needsUpdate = true;
+  }
+  if (FX.motes){
+    const pos = FX.motes.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++){
+      let y = pos.getY(i) + dt * 0.35;
+      if (y > 16) y = 0.5;
+      pos.setY(i, y);
+    }
+    pos.needsUpdate = true;
+  }
+}
+
+/* ================= Luồng game ================= */
+function startGame(idx){
+  playerIdx = idx;
+  document.getElementById("startScreen").classList.add("hidden");
+  try { buildWorld(); }
+  catch(e){ showErr("Không khởi tạo được 3D (WebGL). Hãy mở file bằng trình duyệt Chrome/Edge mới rồi thử lại. Chi tiết: " + e.message); return; }
+  document.getElementById("gameCanvas").classList.remove("hidden");
+  document.getElementById("hud").classList.remove("hidden");
+  document.getElementById("sidePanel").classList.remove("hidden");
+  document.getElementById("help").classList.remove("hidden");
+  mask = 1 << idx; merges = 1;
+  player = spawnCreature(idx, true);
+  const counts = { 0: 3, 1: 2, 2: 2, 3: 2, 4: 1 };
+  SP.forEach(sp => { if (sp.model !== "plant") { const n = counts[sp.size] || 2; for (let i = 0; i < n; i++) spawnCreature(sp.idx, false); } });
+  clock = new THREE.Clock();
+  startTime = performance.now(); running = true;
+  camYaw = 0;
+  updateHUD(); renderSuggestions(); renderCodex();
+  toast("Bạn là " + SP[idx].vn + " (" + SP[idx].name + "). Hãy săn loài nhỏ hơn để gộp gen và tiến hoá!", 4200);
+  requestAnimationFrame(loop);
+}
+addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
+addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+addEventListener("resize", () => { if (renderer){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); } });
+
+function effSize(){ return SP[playerIdx].size + (merges - 1) * 0.45; }
+function hybridName(){
+  const names = [];
+  SP.forEach(sp => { if (mask & (1 << sp.idx)) names.push(sp.name); });
+  return names.length === 1 ? names[0] : names.join(" × ");
+}
+function updateHUD(){
+  document.getElementById("hudName").textContent = "Loài của bạn" + (merges > 1 ? " (lai " + merges + " loài)" : "");
+  document.getElementById("hudSci").textContent = hybridName();
+  document.getElementById("hpFill").style.width = Math.max(0, hp) + "%";
+  document.getElementById("hudUnion").textContent = fmt(U(mask));
+  document.getElementById("hudMerged").textContent = merges + "/" + SP.length;
+  document.getElementById("hudKills").textContent = kills;
+  document.getElementById("hudBurn").textContent = burnSim;
+}
+function renderSuggestions(){
+  const list = [];
+  SP.forEach(sp => {
+    if (mask & (1 << sp.idx)) return;
+    const nu = U(mask | (1 << sp.idx));
+    list.push({ sp, added: nu - U(mask), shared: U(mask) + sp.blocks - nu });
+  });
+  list.sort((a, b) => b.added - a.added);
+  const el = document.getElementById("sugList");
+  el.innerHTML = "";
+  list.slice(0, 3).forEach(it => {
+    const d = document.createElement("div");
+    d.className = "sug" + (targetedIdx === it.sp.idx ? " targeted" : "");
+    d.innerHTML = "Săn <b>" + it.sp.vn + "</b> <span style='font-style:italic'>(" + it.sp.name + ")</span><br>" +
+      "<span class='plus'>+" + fmt(it.added) + " block mới</span> · chung " + fmt(it.shared) + " block" +
+      (it.sp.size > effSize() ? "<br><span style='color:#ff9a8a'>⚠ Loài này lớn hơn bạn — nguy hiểm!</span>" : "");
+    d.onclick = () => { targetedIdx = it.sp.idx; renderSuggestions(); showDetail(it.sp.idx); toast("Đã đánh dấu mục tiêu: " + it.sp.vn + " — cột sáng vàng chỉ chỗ của nó.", 2400); };
+    el.appendChild(d);
+  });
+  if (!list.length) el.innerHTML = "<div class='sug'>Đã gộp đủ " + SP.length + " loài 🎉</div>";
+}
+function renderCodex(){
+  const el = document.getElementById("codexList");
+  el.innerHTML = "";
+  SP.forEach(sp => {
+    const d = document.createElement("div");
+    d.className = "cx";
+    d.innerHTML = (mask & (1 << sp.idx) ? "<span class='done'>✓ Đã gộp</span> " : "○ ") + "<b>" + sp.vn + "</b> <span class='sci'>" + sp.name + "</span>";
+    d.onclick = () => showDetail(sp.idx);
+    el.appendChild(d);
+  });
+}
+function showDetail(idx){
+  const sp = SP[idx], card = document.getElementById("detailCard");
+  const merged = !!(mask & (1 << idx));
+  let rel = "";
+  if (!merged && playerIdx >= 0){
+    const nu = U(mask | (1 << idx));
+    rel = "<div class='row'>So với bộ gen của bạn: chung <b>" + fmt(U(mask) + sp.blocks - nu) + "</b> block · bổ sung <b>" + fmt(nu - U(mask)) + "</b> block mới</div>";
+  }
+  card.innerHTML = "<span class='close' onclick='document.getElementById(\"detailCard\").classList.add(\"hidden\")'>✕</span>" +
+    "<h3>" + sp.vn + "</h3><div class='sci'>" + sp.name + " · " + GROUP_VN[sp.group] + " · TaxID " + sp.taxid + "</div>" +
+    "<div class='row'>🧬 Tổng số gen (NCBI): <b>" + fmt(sp.genes) + "</b></div>" +
+    "<div class='row'>🧩 Block gen phân biệt: <b>" + fmt(sp.blocks) + "</b></div>" +
+    "<div class='row'>🔗 Merkle root:<br>" + sp.root + "</div>" + rel +
+    "<div class='row' style='margin-top:6px'>Gen thật tiêu biểu:</div><div>" +
+    sp.sample_genes.map(g => "<span class='gene' title='" + (g.name || "").replace(/'/g, "") + "'>" + g.symbol + "</span>").join("") + "</div>" +
+    "<div class='row' style='color:#9fb894;font-size:11.5px'>Di chuột vào từng gen để xem tên đầy đủ. Dữ liệu: GeneChain Block Registry.</div>";
+  card.classList.remove("hidden");
+}
+
+function doMerge(spIdx, individual){
+  const sp = SP[spIdx];
+  const oldMask = mask, newMask = mask | (1 << spIdx);
+  const shared = U(oldMask) + sp.blocks - U(newMask);
+  const added = U(newMask) - U(oldMask);
+  mask = newMask; merges = popcount(mask); kills++;
+  burnSim += 10;
+  if (popcount(oldMask) === 1){
+    const a = Math.min(playerIdx, spIdx), b = Math.max(playerIdx, spIdx);
+    firstPairRoot = PR[a + "-" + b];
+  }
+  const grow = 1 + (merges - 1) * 0.13;
+  player.grp.scale.setScalar(player.grp.userData.baseScale * grow);
+  updateHUD(); renderSuggestions(); renderCodex();
+  running = false;
+  const c = document.getElementById("evoContent");
+  c.innerHTML = "<h2>🧬 TIẾN HOÁ — GỘP GEN THÀNH CÔNG!</h2>" +
+    "<p>Bạn vừa gộp gen của <b>" + sp.vn + "</b> <span class='sci'>(" + sp.name + ")</span> — loài có <b>" + fmt(sp.genes) + "</b> gen thật trên NCBI.</p>" +
+    "<p>Chung với bộ gen của bạn: <b>" + fmt(shared) + "</b> block · Bổ sung mới: <b>+" + fmt(added) + "</b> block · Bộ gen hợp nhất giờ có <b>" + fmt(U(mask)) + "</b> block.</p>" +
+    "<p>Loài mới của bạn: <span class='sci'>" + hybridName() + "</span></p>" +
+    (firstPairRoot && popcount(oldMask) === 1 ? "<p>🔗 Merkle root của loài lai (tính thật từ hợp block, cùng công thức registry):</p><div class='root'>" + firstPairRoot + "</div>" : "") +
+    "<p>Gen thật vừa nhận từ " + sp.vn + ": " + sp.sample_genes.slice(0, 6).map(g => "<b>" + g.symbol + "</b>").join(", ") + "…</p>" +
+    "<p style='color:#ffb27a'>🔥 Đã đốt mô phỏng 10 GNCH phí tiến hoá (theo cơ chế GeneBlockV2: 50% đốt / 50% về treasury).</p>" +
+    "<button onclick='closeEvo()'>Tiếp tục săn →</button>";
+  document.getElementById("evoModal").classList.remove("hidden");
+  if (individual) respawnLater(individual);
+  if (mask === (1 << SP.length) - 1) setTimeout(showEnd, 400);
+}
+function closeEvo(){
+  document.getElementById("evoModal").classList.add("hidden");
+  if (mask === (1 << SP.length) - 1){ showEnd(); return; }
+  running = true; clock.getDelta();
+}
+function showEnd(){
+  running = false;
+  const mins = ((performance.now() - startTime) / 60000).toFixed(1);
+  const c = document.getElementById("endContent");
+  c.innerHTML = "<h2>🌟 SIÊU LOÀI NGUYÊN THUỶ!</h2>" +
+    "<p>Bạn đã gộp gen của <b>cả " + SP.length + " loài</b> thành một bộ gen hợp nhất gồm <b>" + fmt(U((1 << SP.length) - 1)) + "</b> block gen thật.</p>" +
+    "<p>Loài cuối cùng: <span class='sci'>" + hybridName() + "</span></p>" +
+    (firstPairRoot ? "<p>🔗 Merkle root lần lai đầu tiên của bạn:</p><div class='root'>" + firstPairRoot + "</div>" : "") +
+    "<p>Thời gian: <b>" + mins + " phút</b> · Săn thành công: <b>" + kills + "</b> · GNCH đốt mô phỏng: <b>" + burnSim + "</b></p>" +
+    "<p style='color:#9fb894'>Mọi con số trên đều tính từ dữ liệu thật của GeneChain Block Registry. Khi nối ví Sepolia, các lần gộp gen này sẽ là giao dịch breed() thật trên GeneBlockV2.</p>" +
+    "<button onclick='location.reload()'>Chơi lại</button>";
+  document.getElementById("endModal").classList.remove("hidden");
+}
+function showDeath(){
+  running = false; dead = true;
+  const c = document.getElementById("endContent");
+  c.innerHTML = "<h2>☠ BẠN ĐÃ BỊ SĂN!</h2>" +
+    "<p>Trong thế giới nguyên thuỷ, kẻ yếu là thức ăn của kẻ mạnh. Bạn đã gộp được <b>" + merges + "/" + SP.length + "</b> loài, bộ gen đạt <b>" + fmt(U(mask)) + "</b> block.</p>" +
+    "<p>Mẹo: làm theo 🎯 gợi ý săn — ưu tiên loài nhỏ hơn và bổ sung nhiều block nhất, tránh xa loài lớn hơn bạn.</p>" +
+    "<button onclick='location.reload()'>Chơi lại</button>";
+  document.getElementById("endModal").classList.remove("hidden");
+}
+function respawnLater(c){
+  c.grp.visible = false; c.gone = true;
+  setTimeout(() => {
+    const a = Math.random()*Math.PI*2, r = 30 + Math.random()*70;
+    c.grp.position.set(Math.cos(a)*r, 0, Math.sin(a)*r);
+    c.grp.visible = true; c.gone = false;
+  }, 5000);
+}
+
+/* --- Vòng lặp chính --- */
+const beacon = { mesh: null };
+function loop(){
+  if (!dead) requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  if (running && !dead){
+    biteCd -= dt; collectCd -= dt;
+    // Điều khiển người chơi
+    let mx = 0, mz = 0;
+    if (keys["w"] || keys["arrowup"]) mz -= 1;
+    if (keys["s"] || keys["arrowdown"]) mz += 1;
+    if (keys["a"] || keys["arrowleft"]) mx -= 1;
+    if (keys["d"] || keys["arrowright"]) mx += 1;
+    const sprint = (keys["shift"]) ? 1.55 : 1;
+    if (mx || mz){
+      const targetYaw = Math.atan2(mx, mz) + Math.PI;
+      let dy = targetYaw - player.heading;
+      while (dy > Math.PI) dy -= Math.PI*2; while (dy < -Math.PI) dy += Math.PI*2;
+      player.heading += dy * Math.min(1, dt * 10);
+      const spd = (7.5 - SP[playerIdx].size * 0.55) * sprint;
+      player.grp.position.x += Math.sin(player.heading) * spd * dt;
+      player.grp.position.z += Math.cos(player.heading) * spd * dt;
+      player.moving = true;
+    } else player.moving = false;
+    const pr = Math.hypot(player.grp.position.x, player.grp.position.z);
+    if (pr > WORLD_R){ player.grp.position.multiplyScalar(WORLD_R / pr); player.grp.position.y = 0; }
+
+    // AI + tương tác
+    for (const c of creatures){
+      if (c.isPlayer || c.gone) continue;
+      const sp = SP[c.spIdx];
+      const dx = c.grp.position.x - player.grp.position.x, dz = c.grp.position.z - player.grp.position.z;
+      const distP = Math.hypot(dx, dz);
+      c.wanderT -= dt;
+      let flee = false, chase = false;
+      if (distP < 17 && sp.size < effSize() - 0.01) flee = true;
+      if (distP < 15 && sp.size > effSize() + 0.6) chase = true;
+      if (flee){ c.heading = Math.atan2(dx, dz); }
+      else if (chase){ c.heading = Math.atan2(-dx, -dz); }
+      else if (c.wanderT <= 0){ c.heading = Math.random()*Math.PI*2; c.wanderT = 2 + Math.random()*3.5; }
+      const base = (5.6 - sp.size * 0.5) * (flee || chase ? 1.25 : 0.62);
+      c.grp.position.x += Math.sin(c.heading) * base * dt;
+      c.grp.position.z += Math.cos(c.heading) * base * dt;
+      const rr = Math.hypot(c.grp.position.x, c.grp.position.z);
+      if (sp.model === "fish"){
+        const lx = c.grp.position.x - 46, lz = c.grp.position.z - 34;
+        if (Math.hypot(lx, lz) > 30){ c.heading += Math.PI * dt * 2; }
+      } else if (rr > WORLD_R){ c.heading += Math.PI * dt * 2.2; }
+      // Săn / bị săn khi chạm
+      if (distP < 2.6 * (c.grp.userData.baseScale + player.grp.userData.baseScale)){
+        if (!(mask & (1 << c.spIdx)) && sp.size <= effSize() + 0.01 && collectCd <= 0){
+          collectCd = 1.2; doMerge(c.spIdx, c);
+        } else if ((mask & (1 << c.spIdx)) && sp.size <= effSize() + 0.01 && collectCd <= 0){
+          collectCd = 1.0; kills++; hp = Math.min(100, hp + 4); updateHUD();
+          toast("Đã ăn thêm một cá thể " + sp.vn + " (+hồi phục). Loài này đã có trong bộ gen của bạn.", 1800);
+          respawnLater(c);
+        } else if (sp.size > effSize() + 0.6 && biteCd <= 0){
+          biteCd = 0.8; hp -= 13;
+          player.grp.position.x -= dx * 0.14; player.grp.position.z -= dz * 0.14;
+          updateHUD();
+          toast("⚠ " + sp.vn + " (" + sp.name + ") đang săn BẠN! Chạy mau!", 1600);
+          if (hp <= 0){ showDeath(); }
+        }
+      }
+    }
+    // Thu thập lúa
+    for (const p of patches){
+      if (p.harvested) continue;
+      const d = Math.hypot(player.grp.position.x - p.x, player.grp.position.z - p.z);
+      if (d < 7 && !(mask & (1 << p.spIdx))){ p.harvested = true; doMerge(p.spIdx, null); }
+    }
+    // Hồi phục chậm
+    hp = Math.min(100, hp + dt * 0.55);
+    if ((loop._acc = (loop._acc || 0) + dt) > 0.4){ loop._acc = 0; updateHUD(); }
+  }
+  // Vị trí + hoạt ảnh mọi cá thể
+  for (const c of creatures){
+    if (c.gone) continue;
+    const sp = SP[c.spIdx], p = c.grp.position;
+    const flyY = c.fly ? 2.4 + Math.sin(t * 2 + c.spIdx * 7 + p.x) * 0.5 : 0;
+    p.y = heightAt(p.x, p.z) + flyY + (sp.model === "fish" ? 0.35 : 0);
+    c.grp.rotation.y = c.heading;
+    const a = c.grp.userData.anim, mv = c.isPlayer ? (player.moving ? 1 : 0.25) : 0.8;
+    a.legs.forEach((leg, i) => { leg.rotation.x = Math.sin(t * 9 * mv + (i % 2) * Math.PI) * 0.5 * mv; });
+    a.wings.forEach((w, i) => { w.rotation.x = Math.sin(t * (c.fly ? 26 : 7) + i * Math.PI) * (c.fly ? 0.9 : 0.3); });
+    if (a.tail) a.tail.rotation.y = Math.sin(t * 5 + c.spIdx) * 0.3;
+  }
+  // Cột sáng đánh dấu mục tiêu gợi ý
+  if (targetedIdx >= 0 && running){
+    let best = null, bd = 1e9;
+    for (const c of creatures){ if (!c.isPlayer && !c.gone && c.spIdx === targetedIdx){ const d = c.grp.position.distanceTo(player.grp.position); if (d < bd){ bd = d; best = c; } } }
+    if (best){
+      if (!beacon.mesh){
+        beacon.mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 26, 10, 1, true),
+          new THREE.MeshBasicMaterial({ color: 0xffd76a, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }));
+        scene.add(beacon.mesh);
+      }
+      beacon.mesh.visible = true;
+      beacon.mesh.position.set(best.grp.position.x, best.grp.position.y + 13, best.grp.position.z);
+    } else if (beacon.mesh) beacon.mesh.visible = false;
+  } else if (beacon.mesh) beacon.mesh.visible = false;
+  // Camera bám sau người chơi
+  if (player){
+    const p = player.grp.position;
+    const back = 13 + SP[playerIdx].size * 1.6, up = 7 + SP[playerIdx].size * 0.9;
+    const cx = p.x - Math.sin(player.heading) * back, cz = p.z - Math.cos(player.heading) * back;
+    camera.position.lerp(new THREE.Vector3(cx, heightAt(cx, cz) + up, cz), 0.06);
+    camera.lookAt(p.x + Math.sin(player.heading) * 6, p.y + 2, p.z + Math.cos(player.heading) * 6);
+  }
+  animateScenery(dt, t);
+  if (renderer) renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>

@@ -17,3 +17,10 @@ tools/
 deploy/node_modules/
 __pycache__/
 *.pyc
+
+# === Game: file thô từ AI + bản build cũ đã bị thay thế ===
+data/tmp_buckets/
+game/**/media-generation-*
+game/trai-dat-nguyen-thuy.html
+game/trai-dat-nguyen-thuy-dien-anh.html
+game/son-hai-kinh-dien-anh.html

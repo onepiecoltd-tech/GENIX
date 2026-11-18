@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sơn Hải Kinh Phiêu Lưu Ký · GeneChain</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body { font-family:"Segoe UI", system-ui, sans-serif; background:#04140a; color:#e8f2e4; overflow:hidden; }
+  .hidden { display:none !important; }
+  button { font-family:inherit; }
+
+  /* ===== Màn hình đăng nhập ===== */
+  #loginScreen { position:fixed; inset:0; overflow:hidden; }
+  #loginScreen img.bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #loginShade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(3,14,7,.42), rgba(3,14,7,.78) 78%); }
+  #loginInner { position:relative; z-index:2; height:100%; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:34px 16px 40px; }
+  #loginInner h1 { font-size:clamp(28px,5.2vw,52px); letter-spacing:2px; color:#ffe9a8; text-shadow:0 3px 22px rgba(0,0,0,.75); text-align:center; margin-bottom:8px; }
+  #loginInner .tag { color:#cfe6c2; text-shadow:0 2px 10px rgba(0,0,0,.8); font-size:15px; margin-bottom:22px; text-align:center; }
+  .loginCard { background:rgba(6,22,12,.88); border:1px solid #ffd76a; border-radius:16px; padding:20px 22px; width:min(430px,94vw); box-shadow:0 18px 50px rgba(0,0,0,.6); }
+  .loginCard label { font-size:13px; color:#a9c79b; display:block; margin-bottom:6px; }
+  .loginCard input { width:100%; padding:11px 12px; border-radius:10px; border:1px solid #3f7a4c; background:#0a1f12; color:#fff; font-size:16px; margin-bottom:12px; }
+  .loginCard input:focus { outline:2px solid #ffd76a; }
+  .mySpecies { display:flex; gap:12px; align-items:center; background:rgba(46,125,70,.16); border:1px solid #2e7d46; border-radius:12px; padding:10px; margin-bottom:12px; }
+  .mySpecies img { width:86px; height:60px; object-fit:cover; border-radius:9px; flex:none; }
+  .mySpecies .vn { font-weight:800; color:#fff; font-size:16px; }
+  .mySpecies .sci { font-style:italic; color:#a9c79b; font-size:12.5px; }
+
+  /* ===== Sân khấu ===== */
+  #stage { position:fixed; inset:0; overflow:hidden; }
+  #zoneBg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; animation:kenburns 36s ease-in-out infinite alternate; }
+  @keyframes kenburns { from { transform:scale(1) translate(0,0); } to { transform:scale(1.09) translate(-1.2%,1%); } }
+  .mist { position:absolute; inset:0; pointer-events:none; background:
+      radial-gradient(ellipse 65% 34% at 18% 88%, rgba(230,245,225,.20), transparent 70%),
+      radial-gradient(ellipse 55% 30% at 82% 92%, rgba(230,245,225,.16), transparent 70%); animation:mistmove 15s ease-in-out infinite alternate; }
+  @keyframes mistmove { from { opacity:.65; } to { opacity:1; } }
+  #fxCanvas { position:absolute; inset:0; pointer-events:none; }
+  #zoneTitle { position:absolute; top:12px; left:50%; transform:translateX(-50%); text-align:center; z-index:5; pointer-events:none; width:max-content; max-width:92vw; }
+  #zoneTitle .zn { font-size:clamp(21px,3.4vw,32px); font-weight:800; color:#ffe9a8; text-shadow:0 2px 14px rgba(0,0,0,.85); letter-spacing:1px; }
+  #zoneTitle .zd { font-size:13px; color:#dcefd2; text-shadow:0 1px 8px rgba(0,0,0,.9); }
+
+  /* HUD */
+  #hud { position:absolute; top:10px; left:10px; z-index:8; display:flex; gap:11px; align-items:center;
+         background:rgba(6,22,12,.82); border:1px solid #3f7a4c; border-radius:14px; padding:8px 13px; max-width:min(600px,94vw); backdrop-filter:blur(5px); }
+  #hud .avatar { width:56px; height:44px; object-fit:cover; border-radius:9px; border:1px solid #ffd76a; flex:none; }
+  #hud .who .nm { font-weight:800; color:#fff; font-size:14.5px; line-height:1.25; }
+  #hud .who .sc { font-style:italic; color:#a9c79b; font-size:11.5px; line-height:1.25; }
+  #hud .bar { width:104px; height:9px; background:#274435; border-radius:6px; overflow:hidden; }
+  #hud #hpFill { height:100%; background:linear-gradient(90deg,#57d95e,#b6f09a); transition:width .4s; }
+  #hud .stat { font-size:12.5px; color:#cfe6c2; line-height:1.45; }
+  #hud .stat b { color:#ffd76a; }
+
+  /* Thẻ sinh linh trên map */
+  #encounterLayer { position:absolute; inset:0; z-index:4; }
+  .card { position:absolute; width:172px; border-radius:13px; overflow:hidden; cursor:pointer; background:#0a1f12;
+          border:2px solid rgba(255,255,255,.28); box-shadow:0 10px 26px rgba(0,0,0,.55); transition:transform .18s, border-color .18s; animation:bob 5s ease-in-out infinite; }
+  .card:hover { transform:scale(1.06); border-color:#ffd76a; z-index:6; }
+  .card img { width:100%; height:96px; object-fit:cover; display:block; }
+  .card .cap { padding:5px 9px 7px; background:rgba(6,22,12,.94); }
+  .card .cap .vn { font-weight:700; font-size:13px; color:#fff; line-height:1.25; }
+  .card .cap .sci { font-style:italic; font-size:10.5px; color:#a9c79b; line-height:1.25; }
+  .card.merged { border-color:#57d95e; filter:saturate(.75); }
+  .card .tick { position:absolute; top:6px; right:6px; background:#1d5c2a; color:#b6f09a; font-size:11px; font-weight:700; border-radius:20px; padding:2px 8px; }
+  @keyframes bob { 0%,100% { margin-top:0; } 50% { margin-top:-7px; } }
+  .amb { position:absolute; max-width:190px; cursor:pointer; background:rgba(6,22,12,.82); border:1px solid rgba(255,255,255,.3);
+         border-radius:20px; padding:5px 12px; font-size:12px; color:#dcefd2; box-shadow:0 6px 16px rgba(0,0,0,.45); transition:.15s; animation:bob 6s ease-in-out infinite; }
+  .amb:hover { border-color:#ffd76a; color:#fff; transform:scale(1.05); }
+  .amb i { color:#a9c79b; }
+
+  /* Panel phải */
+  #sidePanel { position:absolute; top:64px; right:10px; z-index:8; width:250px; max-height:calc(100% - 196px); overflow-y:auto; padding:9px 10px;
+               background:rgba(6,22,12,.8); border:1px solid #3f7a4c; border-radius:14px; backdrop-filter:blur(5px); }
+  #sidePanel h3 { font-size:13px; color:#ffe9a8; margin:4px 0 6px; }
+  #panelHide { background:rgba(255,255,255,.08); color:#ffe9a8; border:1px solid #3f7a4c; border-radius:7px; cursor:pointer; font-size:13px; line-height:1; padding:3px 8px; flex:none; }
+  #panelHide:hover { border-color:#ffd76a; }
+  #panelTab { position:absolute; top:64px; right:0; z-index:8; background:rgba(6,22,12,.85); color:#ffe9a8; border:1px solid #3f7a4c; border-right:none;
+              border-radius:10px 0 0 10px; cursor:pointer; font-size:12.5px; font-weight:700; padding:9px 8px; writing-mode:vertical-rl; }
+  .sug { display:flex; gap:7px; background:rgba(46,125,70,.16); border:1px solid #2e7d46; border-radius:9px; padding:5px; margin-bottom:6px; cursor:pointer; font-size:11.5px; line-height:1.35; }
+  .sug:hover { border-color:#ffd76a; }
+  .sug img { width:46px; height:34px; object-fit:cover; border-radius:6px; flex:none; }
+  .sug b { color:#fff; } .sug .plus { color:#8be08b; font-weight:700; }
+  #codexSearch { width:100%; padding:7px 9px; border-radius:8px; border:1px solid #3f7a4c; background:#0a1f12; color:#fff; font-size:13px; margin-bottom:6px; }
+  .cx { display:flex; gap:7px; align-items:center; font-size:11.5px; padding:3px 4px; border-radius:7px; cursor:pointer; line-height:1.3; }
+  .cx:hover { background:rgba(255,255,255,.07); }
+  .cx .sci { font-style:italic; color:#a9c79b; font-size:10.5px; display:block; }
+
+  /* Điều hướng map */
+  #zoneNav { position:absolute; left:50%; transform:translateX(-50%); bottom:10px; z-index:8; display:flex; gap:7px; max-width:97vw; overflow-x:auto; padding:2px; }
+  .zbtn { width:104px; flex:none; border:2px solid rgba(255,255,255,.25); border-radius:12px; overflow:hidden; cursor:pointer; background:#0a1f12; padding:0; transition:.15s; }
+  .zbtn img { width:100%; height:40px; object-fit:cover; display:block; }
+  .zbtn span { display:block; font-size:11px; font-weight:700; color:#e8f2e4; padding:4px 2px 5px; background:rgba(6,22,12,.9); }
+  .zbtn:hover { border-color:#ffd76a; transform:translateY(-3px); }
+  .zbtn.active { border-color:#ffd76a; box-shadow:0 0 0 2px rgba(255,215,106,.4); }
+
+  /* Bảng chạm trán */
+  #encPanel { position:absolute; left:50%; transform:translateX(-50%); bottom:86px; z-index:12; width:min(680px,95vw);
+              background:linear-gradient(180deg, rgba(20,48,29,.97), rgba(10,31,18,.97)); border:1px solid #ffd76a; border-radius:16px;
+              box-shadow:0 18px 46px rgba(0,0,0,.65); padding:13px 16px; display:flex; gap:14px; align-items:center; }
+  #encPanel img { width:138px; height:92px; object-fit:cover; border-radius:11px; flex:none; }
+  #encPanel .inf { flex:1; min-width:0; }
+  #encPanel h3 { color:#ffe9a8; font-size:19px; margin-bottom:2px; }
+  #encPanel .sci { font-style:italic; color:#a9c79b; font-size:12.5px; margin-bottom:6px; }
+  .cmp { display:inline-block; font-size:12px; font-weight:700; border-radius:16px; padding:2px 10px; margin-bottom:8px; }
+  .cmp.weak { background:#1d5c2a; color:#b6f09a; } .cmp.even { background:#6b5a14; color:#ffe9a8; } .cmp.strong { background:#6e2318; color:#ffb0a0; }
+  .actions { display:flex; gap:9px; flex-wrap:wrap; }
+  .btn { background:linear-gradient(180deg,#3da35d,#2e7d46); color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:14.5px; font-weight:700; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.4); }
+  .btn:hover { filter:brightness(1.13); }
+  .btn.flee { background:linear-gradient(180deg,#c98a2d,#a86e1c); }
+  .btn.ghost { background:rgba(255,255,255,.09); box-shadow:none; }
+  .btn.big { font-size:16px; padding:12px 22px; width:100%; }
+
+  /* Overlay */
+  .overlay { position:fixed; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(2,10,5,.72); }
+  .overlay .bgimg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.3; }
+  .panel { position:relative; background:linear-gradient(180deg,#14301d,#0a1f12); border:1px solid #ffd76a; border-radius:18px; max-width:640px; width:100%; max-height:92%; overflow-y:auto; padding:24px 26px; box-shadow:0 22px 60px rgba(0,0,0,.65); }
+  .panel h2 { color:#ffe9a8; font-size:24px; margin-bottom:9px; }
+  .panel .sci { font-style:italic; color:#a9c79b; }
+  .panel p { font-size:14.5px; line-height:1.7; color:#d7e8cd; margin:7px 0; }
+  .panel p b { color:#ffd76a; }
+  .duo { display:flex; gap:12px; margin:10px 0; }
+  .duo figure { flex:1; border-radius:12px; overflow:hidden; border:1px solid #3f7a4c; }
+  .duo img { width:100%; height:150px; object-fit:cover; display:block; }
+  .duo figcaption { font-size:12px; padding:5px 8px; background:rgba(6,22,12,.9); color:#cfe6c2; }
+  .burst { text-align:center; font-size:21px; color:#ffd76a; margin:2px 0 6px; }
+
+  #toast { position:fixed; left:50%; bottom:170px; transform:translateX(-50%); z-index:40; background:rgba(6,22,12,.94); border:1px solid #ffd76a; color:#ffe9a8;
+           border-radius:12px; padding:10px 18px; font-size:14px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .3s; max-width:92vw; text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <img class="bg" id="loginBg" alt="">
+  <div id="loginShade"></div>
+  <div id="loginInner">
+    <h1>🏔 SƠN HẢI KINH PHIÊU LƯU KÝ</h1>
+    <p class="tag">Đăng nhập để Sơn Hải Kinh chọn cho bạn một loài — khoẻ thì đi săn, yếu thì trốn sang map khác.</p>
+    <div class="loginCard" id="loginCard"></div>
+  </div>
+</div>
+
+<div id="stage" class="hidden">
+  <img id="zoneBg" alt="">
+  <div class="mist"></div>
+  <canvas id="fxCanvas"></canvas>
+  <div id="zoneTitle"><div class="zn" id="zoneName">—</div><div class="zd" id="zoneDesc">—</div></div>
+  <div id="encounterLayer"></div>
+  <div id="hud">
+    <img class="avatar" id="hudArt" alt="">
+    <div class="who"><div class="nm" id="hudName">—</div><div class="sc" id="hudSci">—</div></div>
+    <div>
+      <div style="font-size:11.5px;">Sinh lực</div>
+      <div class="bar"><div id="hpFill" style="width:100%"></div></div>
+    </div>
+    <div class="stat" id="hudStat">—</div>
+  </div>
+  <div id="sidePanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+      <h3 style="margin:0">🎯 Con mồi dễ nhất ở đây</h3>
+      <button id="panelHide" onclick="hidePanel()" title="Thu gọn panel">»</button>
+    </div>
+    <div id="sugList" style="margin-top:6px"></div>
+    <button class="btn" style="width:100%;margin:4px 0 8px" onclick="randomEncounter()">🎲 Tìm con mồi</button>
+    <h3 id="codexToggle" onclick="toggleCodex()" style="cursor:pointer">📖 Tra cứu muôn loài <span id="codexArrow">▸</span></h3>
+    <div id="codexBox" class="hidden">
+      <input id="codexSearch" placeholder="Gõ tên loài hoặc TaxID…" oninput="renderCodex()">
+      <div id="codexList"></div>
+    </div>
+  </div>
+  <button id="panelTab" class="hidden" onclick="showPanel()">🎯 Gợi ý</button>
+  <div id="encPanel" class="hidden"></div>
+  <div id="zoneNav"></div>
+</div>
+
+<div id="revealOverlay" class="overlay hidden"><img class="bgimg" id="revealBg" alt=""><div class="panel" id="revealContent"></div></div>
+<div id="evoOverlay" class="overlay hidden"><img class="bgimg" id="evoBg" alt=""><div class="panel" id="evoContent"></div></div>
+<div id="endOverlay" class="overlay hidden"><img class="bgimg" id="endBg" alt=""><div class="panel" id="endContent"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ===== Dữ liệu do builder chèn vào ===== */
+const GAME_DATA = /*__DATA__*/ null;
+const ART = /*__ART__*/ null;
+
+const ALL = GAME_DATA.species;                 // [taxid, ten khoa hoc, bucket, genes, blocks]
+const FEAT = {}; GAME_DATA.featured.forEach(f => FEAT[f.t] = f);
+const ALLBY = {}; ALL.forEach(r => ALLBY[r[0]] = r);
+const BYBUCKET = {}; ALL.forEach(r => { (BYBUCKET[r[2]] = BYBUCKET[r[2]] || []).push(r); });
+const MAPS = GAME_DATA.shk.maps;
+const MAPBY = {}; MAPS.forEach(m => MAPBY[m.id] = m);
+const BEASTS = GAME_DATA.shk.beasts.filter(b => b.stage > 0).sort((a, b) => a.stage - b.stage);
+const LINEAGES = GAME_DATA.shk.lineages;
+
+const BUCKET_VN = { mammal:"Động vật có vú", invertebrate:"Không xương sống", vertebrate:"Có xương sống", plant:"Thực vật", fungi:"Nấm" };
+const GROUP_VN = { mammal:"Động vật có vú", bird:"Chim", fish:"Cá", reptile:"Bò sát", amphibian:"Lưỡng cư", insect:"Côn trùng", worm:"Giun", plant:"Thực vật" };
+const fmt = n => n.toLocaleString("vi-VN");
+function powerOf(blocks){ return Math.round(30 * Math.pow(Math.max(blocks, 1) / 1000, 0.55)); }
+function $(id){ return document.getElementById(id); }
+function toast(msg, ms){
+  const t = $("toast"); t.innerHTML = msg; t.style.opacity = 1;
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, ms || 2600);
+}
+
+/* Một "sinh linh" thống nhất từ loài nổi bật (có ảnh) hoặc loài thường (toàn bộ CSDL) */
+function fromFeatured(f){
+  return { taxid:f.t, disp:f.vn, sci:f.n, label:GROUP_VN[f.g] || f.g, blocks:f.b, genes:f.ge,
+           art:ART.species[f.t], featured:true, group:f.g, bucket:null };
+}
+function fromRow(r){
+  const f = FEAT[r[0]];
+  if (f) return fromFeatured(f);
+  return { taxid:r[0], disp:r[1], sci:r[1], label:BUCKET_VN[r[2]] || r[2], blocks:r[4], genes:r[3],
+           art:null, featured:false, group:null, bucket:r[2] };
+}
+function lineageOf(c){
+  if (c.featured){
+    if (c.taxid === 9615) return LINEAGES.canid;
+    return LINEAGES[c.group] || LINEAGES.mammal;
+  }
+  return LINEAGES[c.bucket] || "";
+}
+function mapsOfBucket(bucket){ return MAPS.filter(m => m.buckets.includes(bucket)); }
+function homeMapOf(c){
+  if (c.featured){ const m = MAPS.find(m => m.featured.includes(c.taxid)); if (m) return m; }
+  const ms = mapsOfBucket(c.bucket || "vertebrate");
+  return ms[0] || MAPS[0];
+}
+function artOf(c){ return c.art || ART.login; }
+
+/* ===== Đăng nhập (hồ sơ lưu trên máy người chơi) ===== */
+const LS_PROFILES = "shkpl_profiles", LS_LAST = "shkpl_last";
+let me = null;        // { name, creature }
+let prog = null;      // { merges, kills, bonus, hp, mapId, absorbed:[] }
+
+function loadProfiles(){ try { return JSON.parse(localStorage.getItem(LS_PROFILES)) || {}; } catch(e){ return {}; } }
+function saveProfiles(p){ localStorage.setItem(LS_PROFILES, JSON.stringify(p)); }
+function progKey(name){ return "shkpl_prog_" + name; }
+function loadProg(name){ try { return JSON.parse(localStorage.getItem(progKey(name))); } catch(e){ return null; } }
+function saveProg(){ if (me) localStorage.setItem(progKey(me.name), JSON.stringify(prog)); }
+function freshProg(homeId){ return { merges:0, kills:0, bonus:0, hp:100, mapId:homeId, absorbed:[] }; }
+
+function renderLogin(){
+  $("loginBg").src = ART.login;
+  const last = localStorage.getItem(LS_LAST);
+  const profiles = loadProfiles();
+  const card = $("loginCard");
+  if (last && profiles[last]){
+    const c = fromRow(ALLBY[profiles[last]] || ALL[0]);
+    me = { name:last, creature:c };
+    card.innerHTML =
+      '<label>Chào mừng trở lại,</label>' +
+      '<div style="font-size:19px;font-weight:800;color:#fff;margin-bottom:10px">' + last + '</div>' +
+      '<div class="mySpecies"><img src="' + artOf(c) + '"><div><div class="vn">' + c.disp + '</div>' +
+      '<div class="sci">' + c.sci + ' · ' + c.label + ' · ' + lineageOf(c) + '</div></div></div>' +
+      '<button class="btn big" onclick="enterGame(false)">▶ Vào thế giới Sơn Hải</button>' +
+      '<button class="btn ghost big" style="margin-top:9px" onclick="logout()">Đổi người chơi khác</button>';
+  } else {
+    card.innerHTML =
+      '<label>Tên người chơi</label>' +
+      '<input id="nameInput" placeholder="Nhập tên của bạn…" maxlength="24">' +
+      '<button class="btn big" onclick="doLogin()">Đăng nhập</button>' +
+      '<p style="font-size:12px;color:#9fb894;margin-top:10px;line-height:1.5">Mỗi người chơi được Sơn Hải Kinh chọn ngẫu nhiên <b>một loài</b> trong ' + fmt(ALL.length) + ' loài thật để bắt đầu hành trình.</p>';
+  }
+}
+function logout(){ localStorage.removeItem(LS_LAST); me = null; renderLogin(); }
+function doLogin(){
+  const name = ($("nameInput").value || "").trim();
+  if (!name){ toast("Hãy nhập tên người chơi trước nhé"); return; }
+  const profiles = loadProfiles();
+  if (!profiles[name]){
+    const row = ALL[Math.floor(Math.random() * ALL.length)];
+    profiles[name] = row[0]; saveProfiles(profiles);
+    me = { name, creature: fromRow(row) };
+    prog = freshProg(homeMapOf(me.creature).id); saveProg();
+    localStorage.setItem(LS_LAST, name);
+    showReveal();
+  } else {
+    me = { name, creature: fromRow(ALLBY[profiles[name]]) };
+    localStorage.setItem(LS_LAST, name);
+    enterGame(false);
+  }
+}
+function showReveal(){
+  const c = me.creature, home = homeMapOf(c);
+  $("revealBg").src = artOf(c);
+  $("revealContent").innerHTML =
+    "<h2>🎲 SƠN HẢI KINH ĐÃ CHỌN CHO BẠN</h2>" +
+    '<figure style="border-radius:12px;overflow:hidden;border:1px solid #ffd76a;margin:8px 0"><img src="' + artOf(c) + '" style="width:100%;height:230px;object-fit:cover;display:block"></figure>' +
+    "<p style='font-size:19px'><b>" + c.disp + "</b></p>" +
+    "<p><span class='sci'>" + c.sci + "</span> · " + c.label + " · " + lineageOf(c) + "</p>" +
+    "<p>Quê nhà của bạn: <b>" + home.name + "</b>. Từ đây, hãy tự lượng sức: <b>khoẻ thì đi săn</b> gộp gen để tiến hoá qua Cửu Vĩ Hồ → Cùng Kỳ → Đế Giang → Chúc Long; <b>yếu thì trốn</b> sang map khác để tránh kẻ mạnh.</p>" +
+    '<button class="btn big" onclick="enterGame(true)">Bắt đầu phiêu lưu →</button>';
+  $("revealOverlay").classList.remove("hidden");
+}
+</script>
+
+<script>
+/* ===== Thế giới game ===== */
+let curMap = null, curTargets = [], currentEnc = null;
+const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y:56},{x:13,y:71},{x:60,y:73} ];
+const WIN_MERGES = 40;
+
+function effPower(){ return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
+function formStage(){ const m = prog.merges; return m >= 25 ? 4 : m >= 17 ? 3 : m >= 9 ? 2 : m >= 2 ? 1 : 0; }
+function beastName(){ const s = formStage(); return s ? BEASTS[s-1].name : "Loài gốc"; }
+
+function enterGame(fromReveal){
+  if (fromReveal) $("revealOverlay").classList.add("hidden");
+  prog = loadProg(me.name) || freshProg(homeMapOf(me.creature).id);
+  if (prog.hp <= 0) prog = freshProg(homeMapOf(me.creature).id);
+  $("loginScreen").classList.add("hidden");
+  $("stage").classList.remove("hidden");
+  buildNav(); updateHUD();
+  goMap(MAPBY[prog.mapId] || homeMapOf(me.creature), "start");
+  startFx();
+}
+function updateHUD(){
+  const c = me.creature;
+  $("hudArt").src = artOf(c);
+  $("hudName").textContent = c.disp;
+  $("hudSci").textContent = c.sci + " · " + lineageOf(c);
+  $("hpFill").style.width = Math.max(0, prog.hp) + "%";
+  $("hudStat").innerHTML = "🔗 Đã gộp: <b>" + prog.merges + "</b> loài · ⚔ Lực: <b>" + fmt(effPower()) + "</b><br>✦ Hình dạng: <b>" + beastName() + "</b> · Săn: <b>" + prog.kills + "</b>";
+}
+function buildNav(){
+  $("zoneNav").innerHTML = MAPS.map(m =>
+    '<button class="zbtn" data-map="' + m.id + '" onclick="travelTo(\'' + m.id + '\')"><img src="' + ART.zones[m.backdrop] + '"><span>' + m.name + "</span></button>").join("");
+}
+function travelTo(id){
+  if (curMap && curMap.id === id) return;
+  closeEnc(); goMap(MAPBY[id], "travel");
+}
+function sampleAmbient(map, n){
+  const pool = [];
+  map.buckets.forEach(b => { if (BYBUCKET[b]) pool.push(...BYBUCKET[b]); });
+  const out = [], seen = new Set([me.creature.taxid]);
+  let guard = 0;
+  while (out.length < n && guard++ < 300 && pool.length){
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    if (seen.has(r[0]) || prog.absorbed.includes(r[0])) continue;
+    seen.add(r[0]); out.push(fromRow(r));
+  }
+  return out;
+}
+function goMap(map, arrive){
+  curMap = map; prog.mapId = map.id; saveProg();
+  $("zoneBg").src = ART.zones[map.backdrop];
+  $("zoneName").textContent = map.name + " " + map.han;
+  $("zoneDesc").textContent = map.desc;
+  document.querySelectorAll(".zbtn").forEach(b => b.classList.toggle("active", b.dataset.map === map.id));
+  const feats = map.featured.filter(t => t !== me.creature.taxid).map(t => fromFeatured(FEAT[t]));
+  curTargets = feats.concat(sampleAmbient(map, 6));
+  renderLayer(); renderSuggestions();
+  if (arrive === "travel" || arrive === "flee"){
+    const predators = curTargets.filter(c => !prog.absorbed.includes(c.taxid) && powerOf(c.blocks) > effPower());
+    if (predators.length && Math.random() < 0.3){
+      const p = predators[Math.floor(Math.random() * predators.length)];
+      toast("⚠ Mai phục! Một kẻ mạnh hơn đang rình bạn ở " + map.name + "…", 3000);
+      setTimeout(() => openEncounter(p, true), 650);
+    }
+  }
+}
+function renderLayer(){
+  const layer = $("encounterLayer"); layer.innerHTML = "";
+  curTargets.forEach((c, i) => {
+    const pos = POS[i % POS.length];
+    const absorbed = prog.absorbed.includes(c.taxid);
+    if (c.featured){
+      const d = document.createElement("div");
+      d.className = "card" + (absorbed ? " merged" : "");
+      d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.7) + "s";
+      d.innerHTML = '<img src="' + c.art + '">' + (absorbed ? '<span class="tick">✓ Đã gộp</span>' : "") +
+        '<div class="cap"><div class="vn">' + c.disp + '</div><div class="sci">' + c.sci + "</div></div>";
+      d.onclick = () => openEncounter(c, false);
+      layer.appendChild(d);
+    } else {
+      const d = document.createElement("div");
+      d.className = "amb"; d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.9) + "s";
+      d.innerHTML = "🐾 <i>" + c.sci + "</i>";
+      d.title = c.sci + " · " + c.label;
+      d.onclick = () => openEncounter(c, false);
+      layer.appendChild(d);
+    }
+  });
+}
+function cmpOf(c){
+  const r = powerOf(c.blocks) / Math.max(1, effPower());
+  if (r <= 0.85) return { cls:"weak", txt:"🟢 Yếu hơn bạn — săn được" };
+  if (r <= 1.15) return { cls:"even", txt:"🟡 Ngang sức bạn — cân nhắc" };
+  return { cls:"strong", txt:"🔴 Mạnh hơn bạn — nên trốn!" };
+}
+function openEncounter(c, ambush){
+  currentEnc = c;
+  const absorbed = prog.absorbed.includes(c.taxid);
+  const cmp = cmpOf(c);
+  $("encPanel").innerHTML =
+    '<img src="' + (c.art || ART.zones[curMap.backdrop]) + '">' +
+    '<div class="inf"><h3>' + c.disp + '</h3><div class="sci">' + c.sci + " · " + c.label + " · sống tại " + curMap.name + "</div>" +
+    (absorbed ? '<span class="cmp weak">✓ Loài này đã có trong bộ gen của bạn</span>'
+              : '<span class="cmp ' + cmp.cls + '">' + cmp.txt + "</span>") +
+    '<div class="actions">' +
+    (absorbed ? '<button class="btn" onclick="doEatMore()">🍖 Săn thêm để hồi phục</button>'
+              : '<button class="btn" onclick="doHunt()">⚔ SĂN — gộp gen</button>') +
+    '<button class="btn flee" onclick="doFlee()">🏃 TRỐN — sang map khác</button>' +
+    (ambush ? "" : '<button class="btn ghost" onclick="closeEnc()">Để sau</button>') +
+    "</div></div>";
+  $("encPanel").classList.remove("hidden");
+}
+function closeEnc(){ currentEnc = null; $("encPanel").classList.add("hidden"); }
+function doEatMore(){
+  prog.hp = Math.min(100, prog.hp + 12); saveProg(); updateHUD();
+  toast("🍖 Đã hồi phục +12 sinh lực"); closeEnc();
+}
+function doHunt(){
+  const c = currentEnc; if (!c) return;
+  const tp = powerOf(c.blocks), mp = effPower();
+  if (mp >= tp){
+    const oldStage = formStage();
+    prog.absorbed.push(c.taxid); prog.merges++; prog.kills++;
+    prog.bonus += Math.round(tp * 0.3);
+    prog.hp = Math.min(100, prog.hp + 10);
+    saveProg(); updateHUD(); closeEnc(); renderLayer(); renderSuggestions();
+    if (prog.merges >= WIN_MERGES){ showEnd(true); return; }
+    const ns = formStage();
+    if (ns > oldStage) showEvo(c, ns);
+    else toast("🧬 Đã gộp gen của <b>" + c.disp + "</b>! (đã gộp " + prog.merges + " loài)");
+  } else {
+    const dmg = 10 + Math.round(18 * (1 - mp / tp));
+    prog.hp -= dmg; saveProg(); updateHUD(); closeEnc();
+    if (prog.hp <= 0){ showEnd(false); return; }
+    toast("💥 Săn hụt! " + c.disp + " mạnh hơn bạn — bị thương -" + dmg + " sinh lực. Hãy trốn và săn kẻ yếu hơn.", 3400);
+  }
+}
+function doFlee(){
+  const c = currentEnc;
+  const wasStrong = c && powerOf(c.blocks) > effPower();
+  closeEnc();
+  const others = MAPS.filter(m => m.id !== curMap.id);
+  const dest = others[Math.floor(Math.random() * others.length)];
+  if (wasStrong && Math.random() < 0.25){
+    prog.hp -= 8; saveProg(); updateHUD();
+    if (prog.hp <= 0){ showEnd(false); return; }
+    toast("🏃 Trốn thoát sang " + dest.name + " nhưng bị cắn -8 sinh lực!", 3000);
+  } else {
+    toast("🏃 Bạn đã trốn sang " + dest.name, 2400);
+  }
+  goMap(dest, "flee");
+}
+function randomEncounter(){
+  const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid));
+  if (!pool.length){ toast("Map này không còn con mồi — hãy sang map khác"); return; }
+  openEncounter(pool[Math.floor(Math.random() * pool.length)], false);
+}
+function renderSuggestions(){
+  const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
+    .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks)).slice(0, 3);
+  $("sugList").innerHTML = pool.length ? pool.map((c, i) => {
+    const cmp = cmpOf(c);
+    return '<div class="sug" onclick="openEncounter(curTargets[' + curTargets.indexOf(c) + '], false)">' +
+      '<img src="' + (c.art || ART.zones[curMap.backdrop]) + '"><div>Săn <b>' + c.disp + '</b><br><span class="plus">' + cmp.txt + "</span></div></div>";
+  }).join("") : '<p style="font-size:12px;color:#9fb894">Không còn con mồi ở map này.</p>';
+}
+function toggleCodex(){
+  const h = $("codexBox").classList.toggle("hidden");
+  $("codexArrow").textContent = h ? "▸" : "▾";
+  if (!h) renderCodex();
+}
+function renderCodex(){
+  const q = ($("codexSearch").value || "").trim().toLowerCase();
+  const el = $("codexList");
+  if (q.length < 2){ el.innerHTML = '<p style="font-size:11.5px;color:#9fb894">Toàn bộ ' + fmt(ALL.length) + ' loài động vật & thực vật thật — gõ để tra cứu.</p>'; return; }
+  const hits = ALL.filter(r => r[1].toLowerCase().includes(q) || String(r[0]) === q).slice(0, 40);
+  el.innerHTML = hits.length ? hits.map(r => {
+    const c = fromRow(r);
+    const ms = mapsOfBucket(r[2]).map(m => m.name).slice(0, 2).join(", ");
+    return '<div class="cx" onclick="toast(\'' + c.sci.replace(/'/g, "") + " · " + c.label + (ms ? " · xuất hiện ở: " + ms : "") + '\')"><div>' + c.disp + '<span class="sci">' + c.sci + " · " + c.label + "</span></div></div>";
+  }).join("") : '<p style="font-size:11.5px;color:#9fb894">Không tìm thấy loài nào.</p>';
+}
+function hidePanel(){ $("sidePanel").classList.add("hidden"); $("panelTab").classList.remove("hidden"); }
+function showPanel(){ $("sidePanel").classList.remove("hidden"); $("panelTab").classList.add("hidden"); }
+
+function showEvo(c, stage){
+  const b = BEASTS[stage - 1];
+  $("evoBg").src = ART.forms[stage];
+  $("evoContent").innerHTML =
+    "<h2>🧬 TIẾN HOÁ THÀNH CÔNG!</h2><div class='burst'>✦ 🧬 ✦</div>" +
+    '<figure style="border-radius:12px;overflow:hidden;border:1px solid #ffd76a;margin:6px 0 10px"><img src="' + ART.forms[stage] + '" style="width:100%;height:215px;object-fit:cover;display:block">' +
+    '<figcaption style="font-size:12.5px;padding:6px 9px;background:rgba(6,22,12,.92);color:#ffe9a8">✦ ' + b.name + " " + b.han + " — " + b.desc + " (" + b.source + ")</figcaption></figure>" +
+    "<p>Sau khi gộp gen của <b>" + c.disp + "</b>, huyết mạch <b>" + lineageOf(me.creature) + "</b> trong bạn thức tỉnh — bạn tiến hoá thành <b>" + b.name + "</b>, dị thú cấp " + stage + " trong Sơn Hải Kinh!</p>" +
+    '<button class="btn" onclick="document.getElementById(\'evoOverlay\').classList.add(\'hidden\')">Tiếp tục hành trình →</button>';
+  $("evoOverlay").classList.remove("hidden");
+}
+function showEnd(win){
+  closeEnc();
+  $("endBg").src = win ? ART.forms[4] : ART.zones[curMap.backdrop];
+  $("endContent").innerHTML = win ?
+    '<img src="' + ART.forms[4] + '" style="width:100%;height:205px;object-fit:cover;border-radius:12px;border:1px solid #ffd76a;margin-bottom:12px">' +
+    "<h2>🌟 CHÚC LONG HIỆN THẾ!</h2>" +
+    "<p><b>" + me.name + "</b> — khởi đầu là <b>" + me.creature.disp + "</b> — đã gộp gen của <b>" + prog.merges + " loài</b> khắp các map Sơn Hải và đạt hình dạng tối thượng: <b>Chúc Long</b>, mở mắt là ngày, nhắm mắt là đêm!</p>" +
+    "<p>Săn thành công: <b>" + prog.kills + "</b> lần · Lực cuối: <b>" + fmt(effPower()) + "</b></p>" +
+    '<button class="btn" onclick="document.getElementById(\'endOverlay\').classList.add(\'hidden\')">Chơi tiếp</button> ' +
+    '<button class="btn ghost" onclick="resetProg()">Chơi lại từ đầu</button>'
+    :
+    "<h2>☠ BẠN ĐÃ GỤC NGÃ TRONG SƠN HẢI</h2>" +
+    "<p>Trong thế giới Sơn Hải Kinh, kẻ yếu là thức ăn của kẻ mạnh. <b>" + me.creature.disp + "</b> của bạn đã gộp được <b>" + prog.merges + "</b> loài trước khi gục ngã.</p>" +
+    "<p>Lần sau: hãy chăm dùng nút <b>🏃 TRỐN</b> khi gặp kẻ mạnh hơn, và săn kẻ yếu để lớn dần.</p>" +
+    '<button class="btn" onclick="resetProg()">Hồi sinh — chơi lại</button>';
+  $("endOverlay").classList.remove("hidden");
+}
+function resetProg(){
+  prog = freshProg(homeMapOf(me.creature).id); saveProg();
+  $("endOverlay").classList.add("hidden");
+  updateHUD(); goMap(MAPBY[prog.mapId], "start");
+}
+
+/* Hạt linh khí bay */
+let fxStarted = false;
+function startFx(){
+  if (fxStarted) return; fxStarted = true;
+  const cv = $("fxCanvas"), ctx = cv.getContext("2d");
+  let W, H; const rs = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  rs(); addEventListener("resize", rs);
+  const motes = Array.from({ length: 55 }, () => ({ x:Math.random(), y:Math.random(), r:Math.random()*2.1+0.6, s:Math.random()*0.00045+0.00015, p:Math.random()*6.28 }));
+  (function loop(t){
+    ctx.clearRect(0, 0, W, H);
+    motes.forEach(m => {
+      m.y -= m.s; if (m.y < -0.02){ m.y = 1.02; m.x = Math.random(); }
+      const a = 0.35 + 0.3 * Math.sin(t / 900 + m.p);
+      ctx.beginPath(); ctx.arc(m.x * W, m.y * H, m.r, 0, 6.29);
+      ctx.fillStyle = "rgba(255,214,120," + a.toFixed(3) + ")"; ctx.shadowColor = "rgba(255,200,90,.9)"; ctx.shadowBlur = 7; ctx.fill(); ctx.shadowBlur = 0;
+    });
+    requestAnimationFrame(loop);
+  })(0);
+}
+
+renderLogin();
+</script>
+</body>
+</html>
