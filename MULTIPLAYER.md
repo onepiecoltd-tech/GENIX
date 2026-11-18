@@ -24,6 +24,22 @@ chung, không cần cài thêm gì.
   khán giả vừa mở link vào chơi cùng, bình luận vẫn điều khiển nhân vật của
   streamer như cũ.
 
+## Quy trình khi livestream (đúng cách chủ dự án sẽ dùng)
+
+1. Bật server trên máy của bạn (`npm start` trong thư mục `server/`), mở
+   đường hầm công khai bằng Cloudflare Tunnel (lệnh ở mục dưới) — được một
+   link `https://....trycloudflare.com`.
+2. Bạn mở link đó, bấm **🌐 Chơi online nhiều người**, nhập tên, kết nối —
+   bạn vào thế giới chung bằng một loài random như mọi người.
+3. Trong panel Online có sẵn ô **Link mời khán giả** kèm nút Copy: link có
+   dạng `https://....trycloudflare.com/?join=1`. Ghim link này vào bình luận
+   buổi live.
+4. Khán giả bấm link → game tự mở sẵn panel online → họ chỉ việc nhập tên và
+   bấm **Kết nối & vào chơi** (địa chỉ server tự nhận diện theo link, không
+   phải gõ gì thêm) → được random một loài và vào cùng thế giới với bạn.
+5. Hết buổi live: tắt tunnel/server là phòng đóng, không lưu lại người chơi
+   nào (đúng thiết kế chơi theo phiên).
+
 ## Chạy thử trên máy của bạn (miễn phí, hợp nhất khi livestream)
 
 Yêu cầu: Node.js 20+.
