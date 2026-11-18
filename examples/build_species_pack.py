@@ -23,6 +23,8 @@ def main():
     # dong/thuc vat kem distinct_blocks that) — tranh doc DB dang bi khoa
     # boi tien trinh nap nam chay nen.
     demo = json.loads((ROOT / "data" / "demo_data.json").read_text())
+    cls_path = ROOT / "data" / "species_class.json"
+    classes = json.loads(cls_path.read_text()) if cls_path.exists() else {}
     bucket_of = {}
     bdir = ROOT / "data" / "tmp_buckets"
     for b in BUCKETS:
@@ -33,7 +35,8 @@ def main():
     out = []
     for row in demo["species"]:
         taxid, name, _kingdom, genes, blocks = row[0], row[1], row[2], row[3], row[4]
-        out.append([taxid, name, bucket_of.get(taxid, "?"), genes, blocks])
+        out.append([taxid, name, bucket_of.get(taxid, "?"), genes, blocks,
+                    classes.get(str(taxid))])
     out.sort(key=lambda r: r[0])
     dest = ROOT / "data" / "game_species_all.json"
     dest.write_text(json.dumps({"count": len(out), "species": out},

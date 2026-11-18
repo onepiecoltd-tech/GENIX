@@ -20,6 +20,40 @@ GROUP_MAP = {"thu": "mammal", "chim": "bird", "ca": "fish", "bo_sat": "reptile",
              "luong_cu": "amphibian", "con_trung": "insect", "thuc_vat": "plant"}
 ZONES = ["linh-ho", "rung-than-moc", "hoa-diem-nguyen", "linh-dien", "van-hai-dao"]
 
+# Loai co chan dung rieng doi 2 (game/art_species2/<taxid>.webp): (taxid, ten VN, nhom)
+PORTRAITS = [
+    (9694, "Hổ Bengal", "mammal"), (9689, "Sư tử châu Phi", "mammal"),
+    (9691, "Báo hoa mai", "mammal"), (13125, "Linh miêu Á-Âu", "mammal"),
+    (9785, "Voi châu Phi", "mammal"), (9894, "Hươu cao cổ", "mammal"),
+    (9833, "Hà mã", "mammal"), (9807, "Tê giác trắng", "mammal"),
+    (9627, "Cáo đỏ", "mammal"), (9612, "Sói xám", "mammal"),
+    (9646, "Gấu trúc lớn", "mammal"), (9649, "Gấu trúc đỏ", "mammal"),
+    (29073, "Gấu Bắc cực", "mammal"), (9593, "Khỉ đột", "mammal"),
+    (38626, "Gấu túi koala", "mammal"), (9317, "Kangaroo xám", "mammal"),
+    (13397, "Cá mập trắng", "fish"), (9771, "Cá voi xanh", "mammal"),
+    (6645, "Bạch tuộc", "invertebrate"), (89248, "Ngựa vằn", "mammal"),
+    (13037, "Bướm chúa", "insect"), (52644, "Đại bàng đầu trắng", "bird"),
+    (30461, "Cú đại bàng", "bird"), (56313, "Cú lợn", "bird"),
+    # Dot 1 (huong toi 300 chan dung)
+    (32536, "Báo gêpa", "mammal"), (9690, "Báo đốm Mỹ", "mammal"),
+    (29064, "Báo tuyết", "mammal"), (9644, "Gấu nâu", "mammal"),
+    (9783, "Voi châu Á", "mammal"), (9901, "Bò rừng Mỹ", "mammal"),
+    (9870, "Tuần lộc", "mammal"), (9852, "Nai sừng tấm", "mammal"),
+    (8801, "Đà điểu", "bird"), (9049, "Chim công", "bird"),
+    (176014, "Vẹt đuôi dài đỏ", "bird"), (185886, "Cá sư tử", "fish"),
+    (80972, "Cá hề", "fish"), (195334, "Cá mập đầu búa", "fish"),
+    (61221, "Rồng Komodo", "reptile"), (1496311, "Trăn gấm", "reptile"),
+    (91907, "Tắc kè hoa", "reptile"), (111132, "Ếch phi tiêu vàng", "amphibian"),
+    (63978, "Bướm khế", "insect"), (177283, "Cua dừa", "invertebrate"),
+    (109280, "Cá ngựa", "fish"), (28980, "Hồng sam khổng lồ", "plant"),
+    (4362, "Cây bẫy kẹp", "plant"), (4232, "Hướng dương", "plant"),
+]
+# Anh dai dien theo lop sinh hoc NCBI (game/art_classes/<Class>.webp)
+CLASSES = ["Magnoliopsida", "Insecta", "Actinopteri", "Mammalia", "Aves",
+           "Malacostraca", "Gastropoda", "Amphibia", "Lepidosauria", "Arachnida",
+           "Anthozoa", "Bivalvia", "Chondrichthyes", "Polypodiopsida", "Pinopsida",
+           "Polychaeta", "Cephalopoda", "Bryopsida", "Echinoidea", "Demospongiae"]
+
 
 def data_uri(path: Path, max_w: int) -> str:
     im = Image.open(path).convert("RGB")
@@ -38,14 +72,30 @@ def main():
     pack = json.loads((ROOT / "data" / "game_species_all.json").read_text())
     shk = json.loads((ROOT / "data" / "shk_data.json").read_text())
     game_data = {"featured": featured, "species": pack["species"], "shk": shk}
+    by_taxid = {r[0]: r for r in pack["species"]}
+    for t, vn, g in PORTRAITS:
+        r = by_taxid.get(t)
+        if r:
+            game_data["featured"].append({"t": t, "vn": vn, "n": r[1], "g": g,
+                                          "ge": r[3], "b": r[4]})
 
-    art = {"species": {}, "zones": {}, "forms": {}}
+    art = {"species": {}, "zones": {}, "forms": {}, "portraits": {}, "classes": {}}
     missing = []
     for sp in gd["species"]:
         p = GAME / "art_species" / f"{sp['taxid']}.webp"
         if not p.exists():
             missing.append(str(p)); continue
         art["species"][str(sp["taxid"])] = data_uri(p, 1000)
+    for t, _vn, _g in PORTRAITS:
+        p = GAME / "art_species2" / f"{t}.webp"
+        if not p.exists():
+            missing.append(str(p)); continue
+        art["portraits"][str(t)] = data_uri(p, 720)
+    for cn in CLASSES:
+        p = GAME / "art_classes" / f"{cn}.webp"
+        if not p.exists():
+            missing.append(str(p)); continue
+        art["classes"][cn] = data_uri(p, 720)
     for z in ZONES:
         p = GAME / "art_zones" / "final" / f"{z}.webp"
         if not p.exists():

@@ -193,7 +193,7 @@ const BEASTS = GAME_DATA.shk.beasts.filter(b => b.stage > 0).sort((a, b) => a.st
 const LINEAGES = GAME_DATA.shk.lineages;
 
 const BUCKET_VN = { mammal:"Động vật có vú", invertebrate:"Không xương sống", vertebrate:"Có xương sống", plant:"Thực vật", fungi:"Nấm" };
-const GROUP_VN = { mammal:"Động vật có vú", bird:"Chim", fish:"Cá", reptile:"Bò sát", amphibian:"Lưỡng cư", insect:"Côn trùng", worm:"Giun", plant:"Thực vật" };
+const GROUP_VN = { mammal:"Động vật có vú", bird:"Chim", fish:"Cá", reptile:"Bò sát", amphibian:"Lưỡng cư", insect:"Côn trùng", worm:"Giun", plant:"Thực vật", invertebrate:"Không xương sống" };
 const fmt = n => n.toLocaleString("vi-VN");
 function powerOf(blocks){ return Math.round(30 * Math.pow(Math.max(blocks, 1) / 1000, 0.55)); }
 function $(id){ return document.getElementById(id); }
@@ -205,13 +205,25 @@ function toast(msg, ms){
 /* Một "sinh linh" thống nhất từ loài nổi bật (có ảnh) hoặc loài thường (toàn bộ CSDL) */
 function fromFeatured(f){
   return { taxid:f.t, disp:f.vn, sci:f.n, label:GROUP_VN[f.g] || f.g, blocks:f.b, genes:f.ge,
-           art:ART.species[f.t], featured:true, group:f.g, bucket:null };
+           art:ART.species[f.t] || (ART.portraits || {})[f.t], featured:true, group:f.g, bucket:null };
+}
+const CLS_FB = { Liliopsida:"Magnoliopsida", Asteroidea:"Echinoidea", Holothuroidea:"Echinoidea",
+  Scyphozoa:"Anthozoa", Hydrozoa:"Anthozoa", Merostomata:"Arachnida", Pycnogonida:"Arachnida",
+  Xiphosura:"Arachnida", Chilopoda:"Insecta", Diplopoda:"Insecta", Clitellata:"Polychaeta",
+  Chromadorea:"Polychaeta", Cestoda:"Polychaeta", Trematoda:"Polychaeta", Thecostraca:"Malacostraca",
+  Branchiopoda:"Malacostraca", Ostracoda:"Malacostraca", Jungermanniopsida:"Bryopsida",
+  Marchantiopsida:"Bryopsida", Lycopodiopsida:"Polypodiopsida", Gnetopsida:"Pinopsida",
+  Cycadopsida:"Pinopsida", Calcarea:"Demospongiae", Hexactinellida:"Demospongiae",
+  Sarcopterygii:"Actinopteri", Myxini:"Actinopteri", Cephalaspidomorphi:"Actinopteri" };
+function classArt(cls){
+  if (!cls || !ART.classes) return null;
+  return ART.classes[cls] || ART.classes[CLS_FB[cls]] || null;
 }
 function fromRow(r){
   const f = FEAT[r[0]];
   if (f) return fromFeatured(f);
   return { taxid:r[0], disp:r[1], sci:r[1], label:BUCKET_VN[r[2]] || r[2], blocks:r[4], genes:r[3],
-           art:null, featured:false, group:null, bucket:r[2] };
+           art:classArt(r[5]), featured:false, group:null, bucket:r[2], cls:r[5] || null };
 }
 function lineageOf(c){
   if (c.featured){
@@ -372,6 +384,12 @@ function renderLayer(){
       d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.7) + "s";
       d.innerHTML = '<img src="' + c.art + '">' + (absorbed ? '<span class="tick">✓ Đã gộp</span>' : "") +
         '<div class="cap"><div class="vn">' + c.disp + '</div><div class="sci">' + c.sci + "</div></div>";
+      d.onclick = () => openEncounter(c, false);
+      layer.appendChild(d);
+    } else if (c.art) {
+      const d = document.createElement("div");
+      d.className = "card"; d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.9) + "s";
+      d.innerHTML = '<img src="' + c.art + '"><div class="cap"><div class="sci">' + c.sci + "</div></div>";
       d.onclick = () => openEncounter(c, false);
       layer.appendChild(d);
     } else {
