@@ -164,6 +164,10 @@
   <input id="srvUrl" placeholder="ws://127.0.0.1:8788" style="width:100%;box-sizing:border-box;margin:2px 0 6px">
   <button class="btn" style="width:100%;margin:4px 0" onclick="connectOnline()">Kết nối &amp; vào chơi</button>
   <button class="btn" style="width:100%" onclick="disconnectOnline()">Ngắt kết nối</button>
+  <div style="margin-top:10px;border-top:1px dashed rgba(255,255,255,.15);padding-top:8px">
+    <div style="font-size:12px;color:#cfe3c2;margin-bottom:4px">Link mời khán giả — ghim vào bình luận khi live, khán giả mở link là vào thẳng màn hình nhập tên chơi online:</div>
+    <div style="display:flex;gap:6px"><input id="shareLink" readonly style="flex:1;box-sizing:border-box"><button class="btn" style="white-space:nowrap" onclick="copyShareLink()">📋 Copy</button></div>
+  </div>
 </div>
 
 <div id="stage" class="hidden">
@@ -922,8 +926,31 @@ function renderEvoOnline(){
   });
   el.innerHTML = h;
 }
+function computeShareLink(){
+  if (location.protocol === "http:" || location.protocol === "https:")
+    return location.origin + location.pathname + "?join=1";
+  const u = (($("srvUrl") && $("srvUrl").value) || "").trim() || "ws://127.0.0.1:8788";
+  return u.replace(/^ws:/, "http:").replace(/^wss:/, "https:") + "/?join=1";
+}
+function refreshShareLink(){ const s = $("shareLink"); if (s) s.value = computeShareLink(); }
+function copyShareLink(){
+  refreshShareLink();
+  const s = $("shareLink"); if (!s) return;
+  const done = () => toast("📋 Đã copy link mời — dán/ghim vào bình luận buổi live nhé!");
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(s.value).then(done, () => { s.select(); try { document.execCommand("copy"); } catch(e){} done(); });
+  else { s.select(); try { document.execCommand("copy"); } catch(e){} done(); }
+}
 (function(){
   const su = $("srvUrl"); if (su && !su.value) su.value = defaultSrvUrl();
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("srv") && su) su.value = qs.get("srv");
+  refreshShareLink();
+  if (su) su.addEventListener("input", refreshShareLink);
+  if (qs.has("join")){
+    $("onlinePanel").classList.remove("hidden");
+    const nm = $("onlineName"); if (nm) nm.focus();
+  }
   const layer = $("encounterLayer");
   if (layer) layer.addEventListener("click", ev => {
     if (!ONLINE.on || ev.target !== layer) return;

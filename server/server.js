@@ -209,8 +209,9 @@ function doHunt(pl, targetId) {
 /* ===== HTTP + WebSocket ===== */
 const gameFile = path.join(ROOT, "game/son-hai-kinh-phieu-luu-ky.html");
 const server = http.createServer((req, res) => {
-  if (req.url === "/health") { res.writeHead(200, { "Content-Type": "application/json" }); res.end('{"ok":true}'); return; }
-  if (req.url === "/" || req.url.startsWith("/game")) {
+  const urlPath = req.url.split("?")[0];
+  if (urlPath === "/health") { res.writeHead(200, { "Content-Type": "application/json" }); res.end('{"ok":true}'); return; }
+  if (urlPath === "/" || urlPath.startsWith("/game")) {
     fs.readFile(gameFile, (err, buf) => {
       if (err) { res.writeHead(500); res.end("Chua build game"); return; }
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });

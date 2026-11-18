@@ -74,9 +74,11 @@ các nền tảng trên.
 
 ## Giới hạn hiện tại (nói thẳng)
 
-- Trạng thái người chơi lưu trong RAM của server: restart server là mọi
-  người chơi lại từ đầu (loài được random lại). Chưa có tài khoản/mật khẩu —
-  người chơi chỉ cần nhập tên hiển thị.
+- **Chơi theo phiên live, không lưu người chơi** (chủ dự án chốt
+  18/11/2026): trạng thái chỉ nằm trong RAM của server — tắt server hoặc hết
+  phiên live là xoá sạch, phiên sau mọi người được random loài mới từ đầu.
+  Không tài khoản, không mật khẩu, không cơ sở dữ liệu người chơi; khán giả
+  chỉ cần nhập tên hiển thị.
 - Một tiến trình server phục vụ tốt vài trăm người chơi đồng thời; đông hơn
   nữa cần tách phòng/load balancer (chưa làm).
 - Dữ liệu loài là dữ liệu thật của GeneChain (31.189 loài động–thực vật);
