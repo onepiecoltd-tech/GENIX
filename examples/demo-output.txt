@@ -1,0 +1,27 @@
+====================================================================
+BƯỚC 1 — GENESIS BLOCKS (giống thuần chủng gốc)
+  #1 OM-Drought Nguyên Bản A | creator=VienLua-DBSCL (Alice) | hash=bf9567f01fe53a1a…
+  #2 OM-Salt Nguyên Bản B | creator=TrungTam-GiongMienTay (Bob) | hash=673445a1682a2b53…
+  #3 OM-Deep Nguyên Bản C | creator=VienLua-DBSCL (Alice) | hash=5a3883ccba1ae567…
+
+BƯỚC 2 — LAI TẠO (Recombination: A+B -> C, gen gốc chỉ tái tổ hợp)
+  #4 Delta Gold F1 | parents=[1,2] | gen=1 | hash=0d21fb9b2e323888…
+  #5 Mekong Prime F2 | parents=[4,3] | gen=2 | hash=f5c9b30bf706070a…
+
+BƯỚC 3 — CẤU PHẦN CHI TIẾT CỦA F2 (đọc ngược từ IPFS qua CID)
+  - [aroma     ] ARO-06 Thơm: 78/100 — Hương lá dứa nhẹ, đạt chuẩn xuất khẩu
+  - [deepwater ] DWP-05 Chịu ngập sâu: 70/100 — Vươn lóng theo mực nước lũ
+  - [disease   ] BLA-08 Kháng đạo ôn: 88/100 — Kháng nấm đạo ôn cổ bông
+  - [drought   ] DRT-09 Chịu hạn: 92/100 — Rễ sâu, chịu hạn 21 ngày
+  - [maturity  ] EAR-07 Chín sớm: 84/100 — Thu hoạch 85 ngày, né lũ cuối vụ
+  - [protein   ] PRO-08 Đạm cao: 86/100 — Hàm lượng protein hạt cao
+  - [salinity  ] SAL-07 Chịu mặn: 85/100 — Chịu mặn 4‰, phù hợp ven biển ĐBSCL
+  - [yield     ] YLD-09 Năng suất cao: 90/100 — Bông dài, hạt chắc, 8-9 tấn/ha
+
+BƯỚC 4 — TRUY XUẤT NGƯỢC & CHIA ROYALTY (bán thương mại 100,000)
+  Verified Merkle hash: True | Tổ tiên: {4: 1, 3: 1, 1: 2, 2: 2}
+  Đóng góp gen từ genesis: {1: 0.25, 2: 0.25, 3: 0.5}
+  Royalty pool (10%): 10,000 | Người bán giữ: 90,000
+    -> VienLua-DBSCL (Alice): 7,500
+    -> TrungTam-GiongMienTay (Bob): 2,500
+====================================================================

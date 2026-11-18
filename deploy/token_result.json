@@ -1,0 +1,56 @@
+{
+  "tokenAddress": "0x2Ed3244A67A6EBd3e1f000Ef651a129cbEf24BE6",
+  "deployTx": "0x569533d15ad5b8e5f8f9d533fac64ac93d80d1f3c63bdfea1f4f4f6b7bdddb2a",
+  "network": "Ethereum Sepolia (chainId 11155111)",
+  "symbol": "GNCH",
+  "totalSupply": "1000000000",
+  "allocations": {
+    "ecosystem": {
+      "address": "0x42e6517995420445D2Ee242cEaf58398E21BbDFC",
+      "amount": 300000000,
+      "tx": "0x2ab9c475075c643b146f553a639587492f3a9061a7bd1418a985d80f997baf9c"
+    },
+    "liquidity": {
+      "address": "0x4B0efB6A82a59e8E72dBc58b806297D8b72C83E2",
+      "amount": 150000000,
+      "tx": "0x919b6ab705cc26b6daff8cfbd049ace8f97d79a7044ec7ed56afcb0a3d5b98ba"
+    },
+    "treasury": {
+      "address": "0xB303F02af2682e06d54eE234f8F422e4902823e7",
+      "amount": 150000000,
+      "tx": "0xf38ced2f1e2e0b4a989e8e093ccf91b9e428a86bed4392de93c5b3351b449f3f"
+    },
+    "growth": {
+      "address": "0x4dc8218e9987dd162875B2311f57d95c2d55bEb2",
+      "amount": 130000000,
+      "tx": "0x2cb4d75092bb6d24d4c1f87791245f07d74ee8abb6a7074e1f08c08d3233e1c5"
+    },
+    "team": {
+      "address": "0x78f1D56006d206eC68DA9DefC10099A935068087",
+      "amount": 120000000,
+      "tx": "0xb1fd941f6d96e725a388ce073dfbe7a30e7880d502b170bdd0d7566a91da11f8"
+    },
+    "partners": {
+      "address": "0xb4e6A4Ff524C80464A1B0213D527f8c58784E253",
+      "amount": 100000000,
+      "tx": "0x85a1c433d2b764f7ed04159d920ae7ac55fd3257dc1de3c38b4d6d767e0bcf0c"
+    },
+    "reserve": {
+      "address": "0xE41a3A868E32abEfDCa64ac49FF6bd35fceDDAbc",
+      "amount": 50000000,
+      "tx": "0x1d0e163cca3eae79a271e547094955594a9a78c2564e344fb91ba49e3f37b5b5"
+    }
+  },
+  "royaltyDemo": {
+    "vien_lua_dbscl": {
+      "address": "0x2237cA1c650DfA2e437Dadb9b06C999b88173553",
+      "amount": 7500,
+      "tx": "0x5282d749aec5e048afdac8cb51070b70d8fc1eeda692011d00a3138959c1a6b7"
+    },
+    "tt_giong_mien_tay": {
+      "address": "0x0A6a7ac1C83883963c6F342B0416210eA9B1e6f9",
+      "amount": 2500,
+      "tx": "0x0836cdafe94d9d59b512fb3fd5c7fc8d75cae3650fe4aad0f9528720dde6aadf"
+    }
+  }
+}

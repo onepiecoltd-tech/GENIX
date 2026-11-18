@@ -1,0 +1,61 @@
+{
+  "contractAddress": "0x521c44eC1818Fea4142A3A8E13Cdb44abe61339C",
+  "deployTx": "0xae9c683abfd1218a27b6977bf2c42377405eaf12eea7d3db2190178c0a359304",
+  "gnch": "0x2Ed3244A67A6EBd3e1f000Ef651a129cbEf24BE6",
+  "treasury": "0xB303F02af2682e06d54eE234f8F422e4902823e7",
+  "supplyStart": "1000000000.0",
+  "funding": {
+    "vien_lua": {
+      "to": "0x2237cA1c650DfA2e437Dadb9b06C999b88173553",
+      "amount": 5000,
+      "tx": "0x4dd295333bb895c0c4646aa83a12354e3a09c6a22bd57f2fbe4f9bacfeff67a6"
+    },
+    "tt_giong": {
+      "to": "0x0A6a7ac1C83883963c6F342B0416210eA9B1e6f9",
+      "amount": 5000,
+      "tx": "0x58f4f8ce8d9b23d23f9f0c3ab4ff2b0ceafa91ef23e7195339afc184c8484588"
+    },
+    "deployer": {
+      "to": "0x9DCfcaA1f7FC08B291C7e2Ac98481C64Aee4fD4d",
+      "amount": 20000,
+      "tx": "0x9c3688c3055a4ca01a76f6c0f84cc3473b2868fed4da856f6ebfa38194749205"
+    },
+    "eth_vien_lua": {
+      "to": "0x2237cA1c650DfA2e437Dadb9b06C999b88173553",
+      "eth": "0.003",
+      "tx": "0xa68e9e9eda66cb9a1450c9d25afd98ad90e2f0f52ef8f7b0ae9f9c86440eadd9"
+    },
+    "eth_tt_giong": {
+      "to": "0x0A6a7ac1C83883963c6F342B0416210eA9B1e6f9",
+      "eth": "0.003",
+      "tx": "0x6b09ff61d021abfb430f6639a6bc0d356e65e004d3af33323792e4598d68db21"
+    }
+  },
+  "tokens": {
+    "pig": {
+      "tokenId": 1,
+      "tx": "0x1497fd5ee18be935830fec0222b50285420ee5de174082f92f40b4d47cb66270",
+      "creator": "0x2237cA1c650DfA2e437Dadb9b06C999b88173553",
+      "merkleRoot": "d415dababc64b994db04aa604e67ce92879b3c0ac37439cf0e3c732341aa1fb3"
+    },
+    "chicken": {
+      "tokenId": 2,
+      "tx": "0xfd22bb34d9b7e8be50983401614dd169f616d1df2c9d26a73b0da35bcf9d848f",
+      "creator": "0x0A6a7ac1C83883963c6F342B0416210eA9B1e6f9",
+      "merkleRoot": "8c5391674b2666f866275d3026042816da6b929fca59175030e5f6c1955975b7"
+    },
+    "hybrid": {
+      "tokenId": 3,
+      "tx": "0x20674a25824cf03542c3805b59fd05e991b3e614f9954abcac9a926c4c26dea5",
+      "merkleRoot": "9f85aa43be79fba5b9ebe9951a457452aca91c493da5a0668771472f62951c07"
+    }
+  },
+  "royalty": {
+    "amount": 10000,
+    "weights": [
+      7500,
+      2500
+    ],
+    "tx": "0xbba3ec4d4bb8beac2602549fbca41b083bca614a4846d4f160325418ba38dad8"
+  }
+}

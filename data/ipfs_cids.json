@@ -1,0 +1,20 @@
+{
+  "note": "CID IPFS that (CIDv1) tinh bang kubo 0.32.1 tu du lieu Block Registry v5, pin tai node local cua du an. Muc species_<taxid>.json chua danh sach block_id that cua loai + Merkle root.",
+  "root_dir": "bafybeibl5zkyuiztmuotur2zs3ulhbk3uzxxiie65ttrj7w4taimqxbdqq",
+  "catalog_all_species.json": "bafybeibijpxhayobw7tdhhgr2tf3xolic6iymhafoz5z2gbslcii4ypjnu",
+  "index.json": "bafkreibz257ei6updhapdti3kqjtsfymvqapnrgbf465btzuzbh4ci46oe",
+  "species": {
+    "9823": "bafybeid54onqlhaqjqwgmryg2qu5vh7mwebc7yiiadwebgtof2e5tfkyva",
+    "9031": "bafybeihhthvnxlypxyrj4v2ogbzwl533csdcv2jb3z2kbf77vcd3bx5wnq",
+    "39947": "bafybeiam2ojnutgl2wvmzr5vqtpzip26bmvp6p7ez2sa7uez2pfu4psa6u",
+    "7955": "bafybeih3bir3uhyampqym23jjjvebvjjsf4xg6cxi3s3ighknt6xy2umra",
+    "8030": "bafybeid4ttsra3uh37xqbd6kqg7ussufpl3hfve6x27vmqtdw7yrzw7wie",
+    "31033": "bafybeiastan7zqkkiezrxrpl7lrsqv5hntoje7chiwjgikrautyj4nsqhu",
+    "28377": "bafybeiajne7mgj5xok46qnzavqc5jmecfct6e5l2njolw67koqp3ekyba4",
+    "8478": "bafybeibftxbmn7otgbqrtnwv7y6ffyqt5h3fgwolya43apkbpeczu3a6r4",
+    "8496": "bafybeifp3qrs2lnjoudacamsvxyazprljgrjmbctkayw52detoijckmtzm",
+    "8839": "bafybeiag6klod4gn2lnfiqvgunnkajcs557l3d67dk3uuffujhfbfqut4u",
+    "8932": "bafybeibahbvjmwbxq6uiup6vizfq7mekdp5lznteugg5bmfg6wsejgx7wm",
+    "9233": "bafybeid4jzhf2t54cdjjranecmn7znjjdq6u24uemyj5csq5afddj4ekvm"
+  }
+}

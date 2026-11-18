@@ -1,0 +1,46 @@
+{
+  "contractAddress": "0x6D2c50DE45719406faB09d00Dd79FB3b53b54AE0",
+  "deployTx": "0x8237f79055eeeba499adee6ecf11e99d423f430d44a411d808eadfbb0be6da5b",
+  "network": "Ethereum Sepolia (chainId 11155111)",
+  "deployer": "0x9DCfcaA1f7FC08B291C7e2Ac98481C64Aee4fD4d",
+  "tokens": {
+    "pig": {
+      "tokenId": 1,
+      "tx": "0xa4849dacf9236b56182ce602a3bab8a0a985833749b7ddab120e358de228d3b7",
+      "merkleRoot": "d415dababc64b994db04aa604e67ce92879b3c0ac37439cf0e3c732341aa1fb3",
+      "geneCids": [
+        "bafybeid54onqlhaqjqwgmryg2qu5vh7mwebc7yiiadwebgtof2e5tfkyva",
+        "bafyd23bd658ea922adf4755770a20f6eaff1c799da79f73ad387b5a",
+        "bafy47dd8bbb8cd6f97e8a240cd5c8f7cd6b047a089380564b34616f",
+        "bafya3aceccbfc080db30a3654f1ef61d89d6dc4fdcd9a43b7364bd1"
+      ]
+    },
+    "chicken": {
+      "tokenId": 2,
+      "tx": "0x7343a82a22f122034348cb3e20ed0774b214ef0358423a591e3e3bc17c5d7143",
+      "merkleRoot": "8c5391674b2666f866275d3026042816da6b929fca59175030e5f6c1955975b7",
+      "geneCids": [
+        "bafybeihhthvnxlypxyrj4v2ogbzwl533csdcv2jb3z2kbf77vcd3bx5wnq",
+        "bafy71d320efd11b45f9a8ef50e3ea54c5f136ed1e554f2f4ecc6884",
+        "bafy81aa01210e7add837c1a133c4732d11907ee67baf92caea28c6d",
+        "bafy01366663fe546a3a5d7525e3c22a543c0c50065aacb1828972bf"
+      ]
+    },
+    "rice": {
+      "tokenId": 3,
+      "tx": "0x9056bd3553be8fa2877486738a2c0c8a7c122cd6983068dba2aa4dbedc8be9ba",
+      "merkleRoot": "648ebf5b902e38ff7634de8f709fae436a83cef1dd7a4c68f87fa3ca9d2ee868",
+      "geneCids": [
+        "bafybeiam2ojnutgl2wvmzr5vqtpzip26bmvp6p7ez2sa7uez2pfu4psa6u",
+        "bafy3f198ed14d770aad6a792a99245ed0d2225dc491e487e25de747",
+        "bafy6019d58cb2139e7dd5852c27ba2cbbb23c59fa4da98d9f7d2b49",
+        "bafyb26f6a64b47fd32497dbb9c0f3aab54d039ee27820f10a73105e"
+      ]
+    },
+    "hybrid_pig_chicken": {
+      "tokenId": 4,
+      "tx": "0x9d008662499d90f4d7af69458bdbaa4b4ae7d3e9e215e01e9b3e8998a7150c4c",
+      "merkleRoot": "9f85aa43be79fba5b9ebe9951a457452aca91c493da5a0668771472f62951c07"
+    }
+  }
+}

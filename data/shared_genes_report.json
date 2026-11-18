@@ -1,0 +1,13 @@
+{
+ "pig_total": 54048,
+ "chicken_total": 32204,
+ "rice_total": 39421,
+ "pig_symbols": 39232,
+ "chicken_symbols": 28237,
+ "rice_symbols": 38794,
+ "shared_pig_chicken": 13399,
+ "shared_pig_rice": 73,
+ "shared_chicken_rice": 73,
+ "shared_all3": 69,
+ "shared_pc_pig_chicken": 13213
+}

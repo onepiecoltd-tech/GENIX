@@ -1,0 +1,18 @@
+======================================================================
+NẠP 300 GENE THẬT TỪ NCBI GENE CHO TỪNG LOÀI
+  #1 Heo (Sus scrofa domesticus) — dữ liệu thật NCBI: genes=300 merkle_root=5c962ee48cfc8565… verified=True
+      vd: NCBI:396832 LEP — leptin | NST 18 | 16492 bp
+      vd: NCBI:397491 IGF1 — insulin like growth factor 1 | NST 5 | 132818 bp
+      vd: NCBI:397078 TGFB1 — transforming growth factor beta 1 | NST 6 | 16949 bp
+  #2 Gà (Gallus gallus domesticus) — dữ liệu thật NCBI: genes=300 merkle_root=de2999c010bc47b9… verified=True
+      vd: NCBI:150110726 IFNU — class II cytokine, IFN-u | NST 2 | None bp
+      vd: NCBI:150092044 LOC150092044 — olfactory receptor 14J1-like | NST  | None bp
+      vd: NCBI:150074660 LOC150074660 — Uncharacterized LOC150074660 | NST 4 | None bp
+  #3 Cây lúa (Oryza sativa) — dữ liệu thật NCBI: genes=300 merkle_root=b170b387a10078e1… verified=True
+      vd: NCBI:29141351 rpoB — RpoB | NST  | 3228 bp
+      vd: NCBI:107276510 LOC107276510 — receptor kinase-like protein Xa21 | NST 11 | 4050 bp
+      vd: NCBI:4326471 LOC4326471 — salt stress-induced protein-like | NST 1 | 1343 bp
+
+GHÉP THẬT: HEO × GÀ BẰNG GENE THẬT NCBI
+  #4 genes=300 | thành phần: {'ga': {'genes': 150, 'pct': 50.0}, 'heo': {'genes': 150, 'pct': 50.0}}
+======================================================================

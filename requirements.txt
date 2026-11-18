@@ -1,0 +1,4 @@
+# Prototype core: chỉ dùng Python stdlib — không cần cài thêm.
+# Khi deploy thật:
+# web3>=6.0          # gọi Smart Contract trên Polygon/Base
+# ipfshttpclient     # IPFS thật thay cho ipfs_sim

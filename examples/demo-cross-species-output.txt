@@ -1,0 +1,19 @@
+======================================================================
+BƯỚC 1 — MỖI LOÀI LÀ 1 BLOCK GỒM 300 GENE-BLOCK NHỎ BẤT BIẾN
+  #1 Heo (Sus scrofa domesticus)                genes=300 merkle_root=4d3da7be77e20286… verified=True
+  #2 Gà (Gallus gallus domesticus)              genes=300 merkle_root=562bbda31be2e9c9… verified=True
+  #3 Cây lúa (Oryza sativa)                     genes=300 merkle_root=38da4492d6fbc5ab… verified=True
+
+BƯỚC 2 — GHÉP GEN HEO × GÀ -> BLOCK MỚI (chimera in-silico)
+  #4 Block Lai Heo-Gà (HG-01) | parents=[1, 2] | genes=300 | merkle_root=53c3491128a65a41…
+  Thành phần truy xuất ngược: {'ga': {'genes': 146, 'pct': 48.7}, 'heo': {'genes': 154, 'pct': 51.3}}
+
+BƯỚC 3 — GHÉP TIẾP (HEO-GÀ) × CÂY LÚA -> BLOCK MỚI THẾ HỆ 2
+  #5 Block Lai Heo-Gà-Lúa (HGL-02) | generation=2 | genes=300
+  Thành phần truy xuất ngược: {'ga': {'genes': 77, 'pct': 25.7}, 'heo': {'genes': 72, 'pct': 24.0}, 'lua': {'genes': 151, 'pct': 50.3}}
+  Toàn bộ tổ tiên của block lai 3 loài: {4: 1, 3: 1, 1: 2, 2: 2}
+
+BƯỚC 4 — MERKLE PROOF: CHỨNG MINH 1 GENE HEO NẰM TRONG BLOCK LAI 3 LOÀI
+  Gene PIG-113 (Heo · Tiêu hoá · biến thể 8) | CID=bafy03e665beec77eef9…
+  Proof gồm 9 bước (log2(300) ≈ 9) | verified=True
+======================================================================
