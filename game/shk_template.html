@@ -289,7 +289,7 @@ function showReveal(){
     '<figure style="border-radius:12px;overflow:hidden;border:1px solid #ffd76a;margin:8px 0"><img src="' + artOf(c) + '" style="width:100%;height:230px;object-fit:cover;display:block"></figure>' +
     "<p style='font-size:19px'><b>" + c.disp + "</b></p>" +
     "<p><span class='sci'>" + c.sci + "</span> · " + c.label + " · " + lineageOf(c) + "</p>" +
-    "<p>Quê nhà của bạn: <b>" + home.name + "</b>. Từ đây, hãy tự lượng sức: <b>khoẻ thì đi săn</b> gộp gen để tiến hoá qua Cửu Vĩ Hồ → Cùng Kỳ → Đế Giang → Chúc Long; <b>yếu thì trốn</b> sang map khác để tránh kẻ mạnh.</p>" +
+    "<p>Quê nhà của bạn: <b>" + home.name + "</b>. Từ đây, hãy tự lượng sức: <b>khoẻ thì đi săn</b> gộp gen để tiến hoá qua 8 dị thú huyền thoại — Nhĩ Thử → Cửu Vĩ Hồ → Tất Phương → Cùng Kỳ → Tương Liễu → Đế Giang → Chúc Long → Ứng Long; <b>yếu thì trốn</b> sang map khác để tránh kẻ mạnh.</p>" +
     '<button class="btn big" onclick="enterGame(true)">Bắt đầu phiêu lưu →</button>';
   $("revealOverlay").classList.remove("hidden");
 }
@@ -302,7 +302,7 @@ const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y
 const WIN_MERGES = 40;
 
 function effPower(){ return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
-function formStage(){ const m = prog.merges; return m >= 25 ? 4 : m >= 17 ? 3 : m >= 9 ? 2 : m >= 2 ? 1 : 0; }
+function formStage(){ const m = prog.merges; return m >= 30 ? 8 : m >= 25 ? 7 : m >= 21 ? 6 : m >= 17 ? 5 : m >= 13 ? 4 : m >= 9 ? 3 : m >= 5 ? 2 : m >= 2 ? 1 : 0; }
 function beastName(){ const s = formStage(); return s ? BEASTS[s-1].name : "Loài gốc"; }
 
 function enterGame(fromReveal){
@@ -493,11 +493,11 @@ function showEvo(c, stage){
 }
 function showEnd(win){
   closeEnc();
-  $("endBg").src = win ? ART.forms[4] : ART.zones[curMap.backdrop];
+  $("endBg").src = win ? ART.forms[8] : ART.zones[curMap.backdrop];
   $("endContent").innerHTML = win ?
-    '<img src="' + ART.forms[4] + '" style="width:100%;height:205px;object-fit:cover;border-radius:12px;border:1px solid #ffd76a;margin-bottom:12px">' +
-    "<h2>🌟 CHÚC LONG HIỆN THẾ!</h2>" +
-    "<p><b>" + me.name + "</b> — khởi đầu là <b>" + me.creature.disp + "</b> — đã gộp gen của <b>" + prog.merges + " loài</b> khắp các map Sơn Hải và đạt hình dạng tối thượng: <b>Chúc Long</b>, mở mắt là ngày, nhắm mắt là đêm!</p>" +
+    '<img src="' + ART.forms[8] + '" style="width:100%;height:205px;object-fit:cover;border-radius:12px;border:1px solid #ffd76a;margin-bottom:12px">' +
+    "<h2>🌟 ỨNG LONG HIỆN THẾ!</h2>" +
+    "<p><b>" + me.name + "</b> — khởi đầu là <b>" + me.creature.disp + "</b> — đã gộp gen của <b>" + prog.merges + " loài</b> khắp các map Sơn Hải và đạt hình dạng tối thượng của Sơn Hải Kinh: <b>Ứng Long</b> — rồng có cánh đã từng tru diệt Xi Vưu!</p>" +
     "<p>Săn thành công: <b>" + prog.kills + "</b> lần · Lực cuối: <b>" + fmt(effPower()) + "</b></p>" +
     '<button class="btn" onclick="document.getElementById(\'endOverlay\').classList.add(\'hidden\')">Chơi tiếp</button> ' +
     '<button class="btn ghost" onclick="resetProg()">Chơi lại từ đầu</button>'

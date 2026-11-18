@@ -51,8 +51,8 @@ def main():
         if not p.exists():
             missing.append(str(p)); continue
         art["zones"][z] = data_uri(p, 1600)
-    for n in (1, 2, 3, 4):
-        p = GAME / "art_forms" / f"form{n}.webp"
+    for n in range(1, 9):
+        p = GAME / "art_forms" / f"stage{n}.webp"
         if not p.exists():
             missing.append(str(p)); continue
         art["forms"][str(n)] = data_uri(p, 1200)
