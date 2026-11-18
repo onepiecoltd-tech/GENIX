@@ -74,6 +74,17 @@
   #sidePanel h3 { font-size:13px; color:#ffe9a8; margin:4px 0 6px; }
   #panelHide { background:rgba(255,255,255,.08); color:#ffe9a8; border:1px solid #3f7a4c; border-radius:7px; cursor:pointer; font-size:13px; line-height:1; padding:3px 8px; flex:none; }
   #panelHide:hover { border-color:#ffd76a; }
+  .mini { background:#1d4d2b; color:#ffe9a8; border:1px solid #3f7a4c; border-radius:8px; padding:3px 9px; font-size:11.5px; cursor:pointer; white-space:nowrap; }
+  .mini:hover { background:#2a6b3c; }
+  #liveBar { position:absolute; top:64px; left:50%; transform:translateX(-50%); z-index:9; display:flex; gap:14px; align-items:center;
+    background:rgba(30,4,4,.88); color:#ffe9a8; border:1px solid #b03a3a; border-radius:12px; padding:7px 16px; font-size:14px; }
+  #liveBar.hidden { display:none; }
+  .livetrack { width:130px; height:7px; background:rgba(255,255,255,.15); border-radius:4px; overflow:hidden; }
+  #liveTimerFill { height:100%; width:100%; background:#ff5252; transition:width .2s linear; }
+  #livePanel { position:absolute; top:112px; right:262px; z-index:9; width:295px; max-height:calc(100% - 130px); overflow:auto;
+    background:rgba(10,16,10,.94); border:1px solid #b03a3a; border-radius:14px; padding:12px 14px; color:#eaffea; }
+  #livePanel.hidden { display:none; }
+  #livePanel input[type="text"], #livePanel input:not([type]), #livePanel textarea { background:rgba(255,255,255,.08); color:#eaffea; border:1px solid #3f7a4c; border-radius:8px; padding:5px 8px; }
   #panelTab { position:absolute; top:64px; right:0; z-index:8; background:rgba(6,22,12,.85); color:#ffe9a8; border:1px solid #3f7a4c; border-right:none;
               border-radius:10px 0 0 10px; cursor:pointer; font-size:12.5px; font-weight:700; padding:9px 8px; writing-mode:vertical-rl; }
   .sug { display:flex; gap:7px; background:rgba(46,125,70,.16); border:1px solid #2e7d46; border-radius:9px; padding:5px; margin-bottom:6px; cursor:pointer; font-size:11.5px; line-height:1.35; }
@@ -154,8 +165,29 @@
       <div class="bar"><div id="hpFill" style="width:100%"></div></div>
     </div>
     <div class="stat" id="hudStat">—</div>
+    <button class="btn" style="padding:6px 14px;white-space:nowrap" onclick="toggleLive(!LIVE.on)">🔴 LIVE</button>
+  </div>
+  <div id="liveBar" class="hidden">
+    <span>🔴 <b>LIVE</b></span><span id="liveCount">⏱ 10.0s</span>
+    <span>🗡 Săn <b id="liveSan">0</b></span><span>🏃 Chạy <b id="liveChay">0</b></span>
+    <div class="livetrack"><div id="liveTimerFill"></div></div>
+  </div>
+  <div id="livePanel" class="hidden">
+    <h3 style="margin:0 0 6px">🔴 Khán giả điều khiển bằng bình luận</h3>
+    <p style="font-size:12px;color:#cfe3c2;margin:0 0 8px">Khán giả gõ <b>«Săn»</b> hoặc <b>«Chạy»</b> — hết 10 giây, lệnh nào nhiều hơn sẽ được AI thực thi ngay.</p>
+    <div id="liveStatus" style="font-size:12.5px;margin-bottom:8px">Đang chờ vòng bình chọn…</div>
+    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="demoChk" onchange="toggleDemo(this.checked)"> 🎭 Mô phỏng bình luận (để test thử)</label>
+    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="bridgeChk" onchange="toggleBridge(this.checked)"> 🌉 Cầu nối chat thật TikTok / YouTube / Facebook</label>
+    <input id="bridgeUrl" value="http://127.0.0.1:8787" style="width:100%;margin:2px 0 6px;box-sizing:border-box">
+    <textarea id="pasteBox" rows="3" placeholder="Hoặc dán bình luận vào đây, mỗi dòng một bình luận…" style="width:100%;box-sizing:border-box"></textarea>
+    <button class="btn" style="width:100%;margin:4px 0" onclick="pasteVotes()">Nạp bình luận đã dán</button>
+    <div id="liveFeed" style="margin-top:6px"></div>
+    <button class="btn" style="width:100%;margin-top:6px" onclick="toggleLive(false)">Tắt LIVE</button>
   </div>
   <div id="sidePanel">
+    <h3 style="margin:0 0 4px">🧬 Tiến hoá theo Sơn Hải Kinh</h3>
+    <div id="evoPanel"></div>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,.12);margin:8px 0">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
       <h3 style="margin:0">🎯 Con mồi dễ nhất ở đây</h3>
       <button id="panelHide" onclick="hidePanel()" title="Thu gọn panel">»</button>
@@ -204,8 +236,10 @@ function toast(msg, ms){
 
 /* Một "sinh linh" thống nhất từ loài nổi bật (có ảnh) hoặc loài thường (toàn bộ CSDL) */
 function fromFeatured(f){
+  const r = ALLBY[f.t] || [];
   return { taxid:f.t, disp:f.vn, sci:f.n, label:GROUP_VN[f.g] || f.g, blocks:f.b, genes:f.ge,
-           art:ART.species[f.t] || (ART.portraits || {})[f.t], featured:true, group:f.g, bucket:null };
+           art:ART.species[f.t] || (ART.portraits || {})[f.t], featured:true, group:f.g, bucket:null,
+           cls:r[5] || null, ord:r[6] || null, fam:r[7] || null, snake:!!r[8] };
 }
 const CLS_FB = { Liliopsida:"Magnoliopsida", Asteroidea:"Echinoidea", Holothuroidea:"Echinoidea",
   Scyphozoa:"Anthozoa", Hydrozoa:"Anthozoa", Merostomata:"Arachnida", Pycnogonida:"Arachnida",
@@ -223,7 +257,8 @@ function fromRow(r){
   const f = FEAT[r[0]];
   if (f) return fromFeatured(f);
   return { taxid:r[0], disp:r[1], sci:r[1], label:BUCKET_VN[r[2]] || r[2], blocks:r[4], genes:r[3],
-           art:classArt(r[5]), featured:false, group:null, bucket:r[2], cls:r[5] || null };
+           art:classArt(r[5]), featured:false, group:null, bucket:r[2], cls:r[5] || null,
+           ord:r[6] || null, fam:r[7] || null, snake:!!r[8] };
 }
 function lineageOf(c){
   if (c.featured){
@@ -250,7 +285,7 @@ function saveProfiles(p){ localStorage.setItem(LS_PROFILES, JSON.stringify(p)); 
 function progKey(name){ return "shkpl_prog_" + name; }
 function loadProg(name){ try { return JSON.parse(localStorage.getItem(progKey(name))); } catch(e){ return null; } }
 function saveProg(){ if (me) localStorage.setItem(progKey(me.name), JSON.stringify(prog)); }
-function freshProg(homeId){ return { merges:0, kills:0, bonus:0, hp:100, mapId:homeId, absorbed:[] }; }
+function freshProg(homeId){ return { merges:0, kills:0, bonus:0, hp:100, mapId:homeId, absorbed:[], log:[] }; }
 
 function renderLogin(){
   $("loginBg").src = ART.login;
@@ -314,13 +349,57 @@ const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y
 const WIN_MERGES = 40;
 
 function effPower(){ return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
-function formStage(){ const m = prog.merges; return m >= 30 ? 8 : m >= 25 ? 7 : m >= 21 ? 6 : m >= 17 ? 5 : m >= 13 ? 4 : m >= 9 ? 3 : m >= 5 ? 2 : m >= 2 ? 1 : 0; }
+/* ===== Tiến hoá theo công thức Sơn Hải Kinh: dị thú = ghép bộ phận của các loài thật =====
+   Mỗi cấp cần: (1) đủ số lần gộp gen, (2) đủ "bộ phận" — tức đã săn/gộp đúng nhóm loài
+   mà sách mô tả (vd Ứng Long: vảy cá + sừng trâu + thân rắn + vuốt ưng + cánh chim). */
+const RAPTORS = ["Accipitriformes", "Falconiformes", "Strigiformes"];
+const RECIPES = {
+  1: { merges: 2, parts: [
+    { label: "Thân chuột", need: 1, hint: "một loài gặm nhấm (bộ Rodentia)", test: c => c.ord === "Rodentia" },
+    { label: "Đầu thỏ", need: 1, hint: "một loài thỏ (bộ Lagomorpha)", test: c => c.ord === "Lagomorpha" } ] },
+  2: { merges: 5, parts: [
+    { label: "Huyết mạch cáo", need: 2, hint: "2 loài họ Chó (Canidae): cáo, sói, chó…", test: c => c.fam === "Canidae" } ] },
+  3: { merges: 9, parts: [
+    { label: "Thân chim", need: 1, hint: "một loài chim (lớp Aves)", test: c => c.cls === "Aves" },
+    { label: "Lửa Chương Nga", need: 1, hint: "săn 1 loài ngay tại Chương Nga Sơn", mapPart: "chuong-nga", test: () => false } ] },
+  4: { merges: 13, parts: [
+    { label: "Thân hổ", need: 1, hint: "một loài họ Mèo (Felidae): hổ, báo, sư tử…", test: c => c.fam === "Felidae" },
+    { label: "Cánh chim", need: 1, hint: "một loài chim (lớp Aves)", test: c => c.cls === "Aves" } ] },
+  5: { merges: 17, parts: [
+    { label: "Chín đầu rắn", need: 3, hint: "3 loài rắn khác nhau", test: c => !!c.snake } ] },
+  6: { merges: 21, parts: [
+    { label: "Bốn cánh", need: 2, hint: "2 loài chim", test: c => c.cls === "Aves" },
+    { label: "Sáu chân", need: 1, hint: "một loài côn trùng (lớp Insecta)", test: c => c.cls === "Insecta" } ] },
+  7: { merges: 25, parts: [
+    { label: "Thân rắn", need: 1, hint: "một loài rắn", test: c => !!c.snake },
+    { label: "Mặt người", need: 1, hint: "một loài linh trưởng (bộ Primates)", test: c => c.ord === "Primates" } ] },
+  8: { merges: 30, parts: [
+    { label: "Vảy cá", need: 1, hint: "một loài cá", test: c => c.cls === "Actinopteri" || c.cls === "Chondrichthyes" },
+    { label: "Sừng trâu", need: 1, hint: "một loài họ Trâu bò (Bovidae): trâu, bò, dê, cừu…", test: c => c.fam === "Bovidae" },
+    { label: "Thân rắn", need: 1, hint: "một loài rắn", test: c => !!c.snake },
+    { label: "Vuốt ưng", need: 1, hint: "một loài chim săn mồi: ưng, đại bàng, cú…", test: c => RAPTORS.includes(c.ord) },
+    { label: "Cánh rồng", need: 1, hint: "một loài chim (lớp Aves)", test: c => c.cls === "Aves" } ] }
+};
+function creatureByTaxid(t){ const f = FEAT[t]; return f ? fromFeatured(f) : (ALLBY[t] ? fromRow(ALLBY[t]) : null); }
+function absorbedCreatures(){ return (prog.log || []).map(e => creatureByTaxid(e.t)).filter(Boolean); }
+function partCount(p){
+  if (p.mapPart) return (prog.log || []).filter(e => e.map === p.mapPart).length;
+  return absorbedCreatures().filter(p.test).length;
+}
+function stageMet(s){
+  const R = RECIPES[s]; if (!R) return true;
+  if (!prog || prog.merges < R.merges) return false;
+  return R.parts.every(p => partCount(p) >= p.need);
+}
+function formStage(){ let s = 0; while (s < 8 && stageMet(s + 1)) s++; return s; }
+function nextRecipe(){ const s = formStage(); return s >= 8 ? null : { stage: s + 1, recipe: RECIPES[s + 1] }; }
 function beastName(){ const s = formStage(); return s ? BEASTS[s-1].name : "Loài gốc"; }
 
 function enterGame(fromReveal){
   if (fromReveal) $("revealOverlay").classList.add("hidden");
   prog = loadProg(me.name) || freshProg(homeMapOf(me.creature).id);
   if (prog.hp <= 0) prog = freshProg(homeMapOf(me.creature).id);
+  if (!prog.log) prog.log = (prog.absorbed || []).map(t => ({ t, map: null }));
   $("loginScreen").classList.add("hidden");
   $("stage").classList.remove("hidden");
   buildNav(); updateHUD();
@@ -436,6 +515,7 @@ function doHunt(){
   if (mp >= tp){
     const oldStage = formStage();
     prog.absorbed.push(c.taxid); prog.merges++; prog.kills++;
+    (prog.log = prog.log || []).push({ t: c.taxid, map: curMap.id });
     prog.bonus += Math.round(tp * 0.3);
     prog.hp = Math.min(100, prog.hp + 10);
     saveProg(); updateHUD(); closeEnc(); renderLayer(); renderSuggestions();
@@ -473,11 +553,14 @@ function randomEncounter(){
 function renderSuggestions(){
   const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
     .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks)).slice(0, 3);
+  const nx = prog ? nextRecipe() : null;
+  const givesPart = c => nx && nx.recipe.parts.some(p => !p.mapPart && partCount(p) < p.need && p.test(c));
   $("sugList").innerHTML = pool.length ? pool.map((c, i) => {
     const cmp = cmpOf(c);
     return '<div class="sug" onclick="openEncounter(curTargets[' + curTargets.indexOf(c) + '], false)">' +
-      '<img src="' + (c.art || ART.zones[curMap.backdrop]) + '"><div>Săn <b>' + c.disp + '</b><br><span class="plus">' + cmp.txt + "</span></div></div>";
+      '<img src="' + (c.art || ART.zones[curMap.backdrop]) + '"><div>' + (givesPart(c) ? "🧩 " : "") + 'Săn <b>' + c.disp + '</b><br><span class="plus">' + cmp.txt + "</span></div></div>";
   }).join("") : '<p style="font-size:12px;color:#9fb894">Không còn con mồi ở map này.</p>';
+  renderEvo();
 }
 function toggleCodex(){
   const h = $("codexBox").classList.toggle("hidden");
@@ -495,6 +578,144 @@ function renderCodex(){
     return '<div class="cx" onclick="toast(\'' + c.sci.replace(/'/g, "") + " · " + c.label + (ms ? " · xuất hiện ở: " + ms : "") + '\')"><div>' + c.disp + '<span class="sci">' + c.sci + " · " + c.label + "</span></div></div>";
   }).join("") : '<p style="font-size:11.5px;color:#9fb894">Không tìm thấy loài nào.</p>';
 }
+/* ===== Panel tiến hoá + tìm loài theo bộ phận còn thiếu ===== */
+function renderEvo(){
+  const el = $("evoPanel"); if (!el || !prog || !me) return;
+  const s = formStage();
+  const cur = s > 0 ? BEASTS[s - 1] : null;
+  let h = '<p style="font-size:12.5px;margin:2px 0 6px">Hình dạng hiện tại: <b>' + (cur ? cur.name + " " + cur.han : "Nguyên hình (" + me.creature.disp + ")") + "</b> · Đã gộp " + prog.merges + " loài</p>";
+  if (s >= 8){
+    h += '<p style="font-size:12.5px;color:#ffd76a;margin:2px 0">👑 Đã đạt đỉnh <b>Ứng Long</b>! Gộp đủ ' + WIN_MERGES + " loài để hoàn thành hành trình.</p>";
+    el.innerHTML = h; return;
+  }
+  const R = RECIPES[s + 1], b = BEASTS[s];
+  h += '<p style="font-size:12.5px;margin:2px 0 4px">Cấp tiếp theo: <b>' + b.name + " " + b.han + "</b> — cần gộp ≥ " + R.merges + " loài" + (prog.merges >= R.merges ? " ✅" : " (" + prog.merges + "/" + R.merges + ")") + " và đủ các bộ phận ghép từ loài thật:</p>";
+  R.parts.forEach((p, i) => {
+    const n = partCount(p), ok = n >= p.need;
+    h += '<div style="font-size:12.5px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.08)"><span>' + (ok ? "✅" : "⬜") + " <b>" + p.label + "</b> (" + Math.min(n, p.need) + "/" + p.need + ')<br><span style="color:#9fb894;font-size:11.5px">' + p.hint + "</span></span>" + (ok ? "" : '<button class="mini" onclick="huntPart(' + (s + 1) + "," + i + ')">🎯 Tìm</button>') + "</div>";
+  });
+  el.innerHTML = h;
+}
+function huntPart(stage, idx){
+  const p = RECIPES[stage].parts[idx];
+  if (p.mapPart){
+    if (curMap.id === p.mapPart){ toast("Bạn đang ở " + curMap.name + " — hãy săn bất kỳ loài nào tại đây để lấy «" + p.label + "»!"); return; }
+    toast("Hãy tới " + MAPBY[p.mapPart].name + " và săn 1 loài ở đó để lấy «" + p.label + "»");
+    goMap(MAPBY[p.mapPart], "travel"); return;
+  }
+  const rows = ALL.filter(r => !prog.absorbed.includes(r[0]) && p.test(fromRow(r)));
+  if (!rows.length){ toast("Không còn loài phù hợp trong dữ liệu"); return; }
+  const c = fromRow(rows[Math.floor(Math.random() * rows.length)]);
+  toast("🎯 Đã tìm thấy <b>" + c.disp + "</b> — cho bộ phận «" + p.label + "»");
+  openEncounter(c, false);
+}
+
+/* ===== Chế độ LIVE: khán giả bình luận Săn / Chạy, AI thực thi lệnh thắng sau 10 giây ===== */
+const LIVE = { on:false, phase:"idle", san:0, chay:0, voters:new Set(), endsAt:0, tick:null,
+               demoTick:null, bridgeTick:null, since:0, feed:[] };
+const DEMO_NAMES = ["MinhAnh", "TuanBeo", "LinhChi", "DragonVN", "HuyHoang", "TrangMoon", "KhoaNe", "BeNa", "HaiDang", "PhuongLy", "BaoChau", "NamLun"];
+function voteKind(text){
+  const t = String(text).toLowerCase();
+  if (t.includes("săn") || /(^|\s)san(\s|$|!|\.)/.test(t)) return "san";
+  if (t.includes("chạy") || t.includes("trốn") || /(^|\s)chay(\s|$|!|\.)/.test(t) || /(^|\s)tron(\s|$|!|\.)/.test(t)) return "chay";
+  return null;
+}
+function castVote(user, text){
+  if (!LIVE.on || LIVE.phase !== "vote") return;
+  const k = voteKind(text); if (!k) return;
+  const u = String(user || "anon").toLowerCase();
+  if (LIVE.voters.has(u)) return;
+  LIVE.voters.add(u); LIVE[k]++;
+  LIVE.feed.unshift({ user: user, text: text }); LIVE.feed = LIVE.feed.slice(0, 7);
+  $("liveFeed").innerHTML = LIVE.feed.map(x => '<div style="font-size:12px;padding:2px 0;border-bottom:1px dashed rgba(255,255,255,.07)"><b>' + x.user + ":</b> " + x.text + "</div>").join("");
+  renderLive();
+}
+function renderLive(){
+  const bar = $("liveBar"); if (!bar) return;
+  bar.classList.toggle("hidden", !LIVE.on);
+  const left = Math.max(0, (LIVE.endsAt - Date.now()) / 1000);
+  $("liveCount").textContent = LIVE.phase === "vote" ? "⏱ " + left.toFixed(1) + "s" : "⚡ Đang thực thi lệnh…";
+  $("liveSan").textContent = LIVE.san; $("liveChay").textContent = LIVE.chay;
+  $("liveTimerFill").style.width = (LIVE.phase === "vote" ? left * 10 : 0) + "%";
+}
+function startRound(){
+  if (!LIVE.on) return;
+  LIVE.phase = "vote"; LIVE.san = 0; LIVE.chay = 0; LIVE.voters = new Set();
+  LIVE.endsAt = Date.now() + 10000;
+  $("liveStatus").innerHTML = "🗳 Vòng mới — khán giả hãy gõ <b>Săn</b> hoặc <b>Chạy</b>!";
+  renderLive();
+  clearInterval(LIVE.tick);
+  LIVE.tick = setInterval(() => { renderLive(); if (Date.now() >= LIVE.endsAt) endRound(); }, 200);
+}
+function endRound(){
+  clearInterval(LIVE.tick); LIVE.phase = "act";
+  const san = LIVE.san, chay = LIVE.chay;
+  const act = (san === 0 && chay === 0) ? "idle" : (san >= chay ? "san" : "chay");
+  $("liveStatus").innerHTML = "Kết quả: 🗡 Săn " + san + " — 🏃 Chạy " + chay + (act === "san" ? " → <b>AI SĂN!</b>" : act === "chay" ? " → <b>AI CHẠY!</b>" : " → không có lệnh nào, AI chờ vòng sau");
+  renderLive();
+  setTimeout(() => {
+    if (!LIVE.on || !prog) return;
+    if (act === "san") aiHunt(); else if (act === "chay") aiFlee();
+    if (prog.hp > 0) setTimeout(startRound, 2500);
+  }, 1200);
+}
+function aiHunt(){
+  const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
+    .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks));
+  if (!pool.length){ toast("🔴 LIVE: hết con mồi ở map này — AI tự trốn sang map khác!"); aiFlee(); return; }
+  currentEnc = pool[0];
+  toast("🔴 LIVE: AI săn <b>" + pool[0].disp + "</b> theo lệnh khán giả!");
+  doHunt();
+}
+function aiFlee(){
+  currentEnc = null;
+  toast("🔴 LIVE: AI trốn sang map khác theo lệnh khán giả!");
+  doFlee();
+}
+function toggleLive(on){
+  LIVE.on = on;
+  $("livePanel").classList.toggle("hidden", !on);
+  renderLive();
+  if (on){
+    toast("🔴 Đã bật LIVE — khán giả bình luận «Săn» / «Chạy», AI làm theo lệnh đông hơn sau mỗi 10 giây!", 3800);
+    startRound();
+  } else {
+    LIVE.phase = "idle";
+    clearInterval(LIVE.tick); clearInterval(LIVE.demoTick); clearInterval(LIVE.bridgeTick);
+    const d = $("demoChk"); if (d) d.checked = false;
+    const b = $("bridgeChk"); if (b) b.checked = false;
+  }
+}
+function toggleDemo(on){
+  clearInterval(LIVE.demoTick);
+  if (!on) return;
+  LIVE.demoTick = setInterval(() => {
+    if (!LIVE.on || LIVE.phase !== "vote") return;
+    const n = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)] + Math.floor(Math.random() * 90 + 10);
+    const r = Math.random();
+    castVote(n, r < 0.48 ? "Săn" : r < 0.82 ? "Chạy" : (r < 0.92 ? "săn nó đi mn" : "chạy mau, nó mạnh lắm"));
+  }, 900);
+}
+function toggleBridge(on){
+  clearInterval(LIVE.bridgeTick);
+  if (!on) return;
+  const step = () => {
+    const url = ($("bridgeUrl").value || "http://127.0.0.1:8787").replace(/\/$/, "");
+    fetch(url + "/votes?since=" + LIVE.since).then(r => r.json()).then(j => {
+      (j.votes || []).forEach(v => { if (v.ts) LIVE.since = Math.max(LIVE.since, v.ts); castVote(v.user, v.text); });
+    }).catch(() => {});
+  };
+  step(); LIVE.bridgeTick = setInterval(step, 2000);
+}
+function pasteVotes(){
+  const lines = ($("pasteBox").value || "").split("\n").map(s => s.trim()).filter(Boolean);
+  lines.forEach((ln, i) => {
+    const m = ln.match(/^([^:]{1,30}):\s*(.*)$/);
+    if (m) castVote(m[1], m[2]); else castVote("khán giả " + (i + 1) + "·" + Date.now(), ln);
+  });
+  $("pasteBox").value = "";
+}
+
 function hidePanel(){ $("sidePanel").classList.add("hidden"); $("panelTab").classList.remove("hidden"); }
 function showPanel(){ $("sidePanel").classList.remove("hidden"); $("panelTab").classList.add("hidden"); }
 
