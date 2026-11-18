@@ -30,3 +30,4 @@ trailer/clips/
 trailer/segs/
 trailer/*.mp4
 trailer/*.wav
+trailer/vo/*.wav
