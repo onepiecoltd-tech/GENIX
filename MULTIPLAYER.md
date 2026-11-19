@@ -99,3 +99,27 @@ các nền tảng trên.
   nữa cần tách phòng/load balancer (chưa làm).
 - Dữ liệu loài là dữ liệu thật của GeneChain (31.189 loài động–thực vật);
   nấm sẽ tự có mặt khi registry nấm nạp xong và đóng gói lại dữ liệu game.
+
+## Bảo mật & chống gian lận (v6.1)
+
+Server giới hạn: 10 tin/giây mỗi kết nối (bị ngắt nếu flood), gói tin tối đa 2 KB, tối đa 4 kết nối/IP và
+300 người/phòng, tên + chat được làm sạch ký tự HTML ở server **và** escape lại ở client. Cooldown: săn 1,5s,
+sang map 2s, trốn 3s, chat 1,5s. PvP: nạn nhân được bảo hộ 10s sau khi bị săn/tái sinh, cùng một cặp
+săn–bị săn tối đa 1 lần/phút, mỗi người tối đa 1 lần gộp gen từ PvP mỗi 8s. WebSocket chỉ nhận Origin
+cùng host (đổi bằng `ALLOWED_ORIGINS=https://a.com,https://b.com`).
+
+Biến môi trường: `TRUST_PROXY=1` (BẮT BUỘC khi chạy sau Cloudflare Tunnel/nginx để đếm đúng IP),
+`MAX_PLAYERS`, `MAX_CONN_PER_IP`, `ALLOWED_ORIGINS`.
+
+Giới hạn còn lại (nói thẳng): hai người cùng thông đồng nhiều IP vẫn "nuôi" nhau chậm được; muốn chống triệt để
+cần xác thực người chơi (mà thiết kế phiên live cố ý không có). Kiểm thử:
+`TRUST_PROXY=1 PORT=8799 node server.js &` rồi `WS_URL=ws://127.0.0.1:8799 node test_security.js`.
+
+## Viral & điểm GENIX (v6.1)
+
+- **Thẻ chia sẻ** (nút 📤, cũng hiện khi tiến hoá/thắng): ảnh 1080×1350 "Tôi là {dị thú}", tải PNG / copy link / chia sẻ
+  hệ thống. Link mời kèm `?ref=<mã>` — người vào chơi qua mã (IP khác, tối đa 10 lượt/người) → người mời +50,
+  người mới +25 điểm.
+- **Bảng xếp hạng phiên** (top 10 theo số lần gộp, cập nhật 3s, chỉ ở RAM).
+- **Điểm GENIX**: +10/lần gộp, +100/cấp tiến hoá, +300 khi thắng; dùng để mở khung thẻ (Linh Quang 100, Chu Tước 300,
+  Ứng Long 800). Lưu localStorage trên máy người chơi. **Không phải tiền mã hoá, không chuyển nhượng, không quy đổi.**

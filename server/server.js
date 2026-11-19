@@ -16,6 +16,46 @@ const ROOT = path.join(__dirname, "..");
 const PORT = process.env.PORT || 8788;
 const WIN_MERGES = 40;
 
+/* ===== Chong gian lan / lam dung (v6.1) ===== */
+const MAX_PLAYERS = +process.env.MAX_PLAYERS || 300;
+const MAX_CONN_PER_IP = +process.env.MAX_CONN_PER_IP || 4;
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";          // bat khi chay sau Cloudflare Tunnel/nginx
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "").split(",").map(x => x.trim()).filter(Boolean);
+const COOLDOWN = { hunt: 1500, travel: 2000, flee: 3000, chat: 1500 };   // ms
+const PVP_IMMUNE_MS = 10000;      // nan nhan duoc mien san sau khi bi san / tai sinh
+const PVP_PAIR_MS = 60000;        // cung 1 cap san - bi san: toi da 1 lan / phut
+const PVP_GLOBAL_MS = 8000;       // moi nguoi: toi da 1 lan gop gen tu PvP / 8 giay
+const REF_BONUS = 50, REF_JOIN_BONUS = 25, REF_MAX = 10;
+
+function clean(s, max) {
+  return Array.from(String(s == null ? "" : s))
+    .filter(ch => ch >= " " && ch !== "\u007f" && !"<>&\"'`".includes(ch))
+    .join("").replace(/\s+/g, " ").trim().slice(0, max);
+}
+const now = () => Date.now();
+const ipCount = new Map();
+function ipOf(req) {
+  if (TRUST_PROXY) {
+    const h = req.headers["cf-connecting-ip"] || (req.headers["x-forwarded-for"] || "").split(",")[0];
+    if (h && h.trim()) return h.trim();
+  }
+  return req.socket.remoteAddress || "?";
+}
+function originOk(req) {
+  const o = req.headers.origin;
+  if (!o) return true;                                   // client khong phai trinh duyet (test, tool)
+  if (ALLOWED_ORIGINS.length) return ALLOWED_ORIGINS.includes(o);
+  try { return new URL(o).host === req.headers.host; } catch (e) { return false; }
+}
+const refCodes = new Map();                              // refCode -> player
+const refIpSeen = new Set();                             // moi IP chi duoc tinh 1 luot gioi thieu
+function newRefCode() {
+  for (;;) {
+    const c = Math.random().toString(36).slice(2, 8).toUpperCase();
+    if (c.length === 6 && !refCodes.has(c)) return c;
+  }
+}
+
 const pack = JSON.parse(fs.readFileSync(path.join(ROOT, "data/game_species_all.json"), "utf8"));
 const shk = JSON.parse(fs.readFileSync(path.join(ROOT, "data/shk_data.json"), "utf8"));
 const NAMES = JSON.parse(fs.readFileSync(path.join(ROOT, "data/server_names.json"), "utf8"));
@@ -112,7 +152,9 @@ function newPlayer(ws, name) {
   const taxid = ROWS[Math.floor(Math.random() * ROWS.length)][0];
   const pl = { id: "p" + pidSeq++, name: String(name || "Khách").slice(0, 24), taxid,
                map: homeMapOf(taxid), x: 30 + Math.random() * 40, y: 45 + Math.random() * 25,
-               hp: 100, bonus: 0, merges: 0, kills: 0, absorbed: [], log: [], won: false, ws };
+               hp: 100, bonus: 0, merges: 0, kills: 0, absorbed: [], log: [], won: false, ws,
+               gx: 0, refs: 0, refCode: newRefCode(), immuneUntil: 0, lastPvp: 0, hitBy: new Map(), cd: {} };
+  refCodes.set(pl.refCode, pl);
   rooms[pl.map].players.set(pl.id, pl);
   return pl;
 }
@@ -136,7 +178,7 @@ function publicNpc(n) {
 function youPayload(pl) {
   const c = creatureOf(pl.taxid);
   return { id: pl.id, taxid: pl.taxid, disp: c.disp, sci: c.sci, hp: pl.hp, merges: pl.merges,
-           kills: pl.kills, power: effPower(pl), absorbed: pl.absorbed,
+           kills: pl.kills, power: effPower(pl), absorbed: pl.absorbed, gx: pl.gx, refCode: pl.refCode, refs: pl.refs,
            progress: partsProgress(pl), won: pl.won };
 }
 function send(pl, obj) { try { pl.ws.send(JSON.stringify(obj)); } catch (e) { /* da ngat */ } }
@@ -151,20 +193,22 @@ function absorb(pl, taxid, room) {
   pl.merges++; pl.kills++;
   pl.bonus += Math.round(powerOf(BYID[taxid][4]) * 0.3);
   pl.hp = Math.min(100, pl.hp + 10);
+  pl.gx += 10;
   const after = stageOf(pl);
   if (after > before) {
+    pl.gx += 100 * (after - before);
     send(pl, { type: "evo", stage: after });
     roomEvent(room, "🧬 " + pl.name + " vừa tiến hoá lên cấp " + after + "!", pl.id);
   }
   if (pl.merges >= WIN_MERGES && !pl.won) {
-    pl.won = true;
+    pl.won = true; pl.gx += 300;
     send(pl, { type: "win" });
     roomEvent(room, "👑 " + pl.name + " đã đạt Ứng Long và hoàn thành hành trình " + WIN_MERGES + " lần gộp!", pl.id);
   }
 }
 function respawn(pl) {
   pl.taxid = ROWS[Math.floor(Math.random() * ROWS.length)][0];
-  pl.hp = 100;
+  pl.hp = 100; pl.immuneUntil = now() + PVP_IMMUNE_MS;
   moveRoom(pl, homeMapOf(pl.taxid));
   send(pl, { type: "respawn", text: "Bạn tái sinh thành " + creatureOf(pl.taxid).disp + " (tiến trình gộp gen được giữ nguyên)" });
 }
@@ -189,6 +233,13 @@ function doHunt(pl, targetId) {
   }
   const victim = room.players.get(targetId);
   if (victim && victim.id !== pl.id) {
+    const t = now();
+    if (t < victim.immuneUntil) { send(pl, { type: "result", ok: false, text: "🛡 " + victim.name + " đang được bảo hộ vài giây" }); return; }
+    if (t - pl.lastPvp < PVP_GLOBAL_MS) { send(pl, { type: "result", ok: false, text: "⏳ Bạn vừa săn người chơi — chờ chút" }); return; }
+    if (t - (pl.hitBy.get(victim.id) || 0) < PVP_PAIR_MS) { send(pl, { type: "result", ok: false, text: "⏳ Vừa săn " + victim.name + " xong — đổi mục tiêu khác" }); return; }
+    pl.lastPvp = t; pl.hitBy.set(victim.id, t);
+    if (pl.hitBy.size > 200) pl.hitBy.clear();
+    victim.immuneUntil = t + PVP_IMMUNE_MS;
     const tp = effPower(victim);
     if (mp >= tp) {
       absorb(pl, victim.taxid, room);
@@ -208,7 +259,14 @@ function doHunt(pl, targetId) {
 
 /* ===== HTTP + WebSocket ===== */
 const gameFile = path.join(ROOT, "game/son-hai-kinh-phieu-luu-ky.html");
+const SEC_HEADERS = {
+  "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY",
+  "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; " +
+    "media-src data: blob:; font-src data:; connect-src 'self' ws: wss: http://127.0.0.1:8787 http://localhost:8787; " +
+    "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+};
 const server = http.createServer((req, res) => {
+  Object.entries(SEC_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   const urlPath = req.url.split("?")[0];
   if (urlPath === "/health") { res.writeHead(200, { "Content-Type": "application/json" }); res.end('{"ok":true}'); return; }
   if (urlPath === "/" || urlPath.startsWith("/game")) {
@@ -221,13 +279,48 @@ const server = http.createServer((req, res) => {
   }
   res.writeHead(404); res.end("Not found");
 });
-const wss = new WebSocketServer({ server });
-wss.on("connection", ws => {
+process.on("uncaughtException", e => console.error("uncaught:", e && e.message));
+const wss = new WebSocketServer({
+  server, maxPayload: 2048,
+  verifyClient: (info, done) => {
+    if (!originOk(info.req)) return done(false, 403, "Forbidden origin");
+    const ip = ipOf(info.req);
+    if ((ipCount.get(ip) || 0) >= MAX_CONN_PER_IP) return done(false, 429, "Too many connections");
+    done(true);
+  }
+});
+wss.on("connection", (ws, req) => {
   let pl = null;
+  const ip = ipOf(req);
+  ipCount.set(ip, (ipCount.get(ip) || 0) + 1);
+  ws.on("error", () => {});                       // frame loi / qua lon: dong ket noi, khong sap server
+  let tokens = 20, lastRefill = now(), strikes = 0, strikeT = now();
+  const strike = () => {
+    const t = now(); if (t - strikeT > 10000) { strikes = 0; strikeT = t; }
+    if (++strikes > 40) { try { ws.close(1008, "rate limit"); } catch (e) {} }
+  };
   ws.on("message", raw => {
+    const t = now();
+    tokens = Math.min(20, tokens + (t - lastRefill) / 100); lastRefill = t;   // 10 tin/giay, burst 20
+    if (tokens < 1) { strike(); return; }
+    tokens -= 1;
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
+    if (!m || typeof m !== "object") return;
+    if (m.type !== "join" && m.type !== "move" && COOLDOWN[m.type]) {
+      if (pl) {
+        if (t - (pl.cd[m.type] || 0) < COOLDOWN[m.type]) { strike(); return; }
+        pl.cd[m.type] = t;
+      }
+    }
     if (m.type === "join") {
-      pl = newPlayer(ws, m.name);
+      if (pl) return;                                              // chi duoc join 1 lan / ket noi
+      if (wss.clients.size > MAX_PLAYERS) { send({ ws }, { type: "result", ok: false, text: "Phòng đã đầy" }); ws.close(); return; }
+      pl = newPlayer(ws, clean(m.name, 24) || "Khách"); pl.ip = ip;
+      const ref = refCodes.get(clean(m.ref, 8).toUpperCase());
+      if (ref && ref !== pl && ref.ip !== ip && ref.refs < REF_MAX && !refIpSeen.has(ip)) {
+        refIpSeen.add(ip); ref.refs++; ref.gx += REF_BONUS; pl.gx += REF_JOIN_BONUS;
+        send(ref, { type: "event", text: "🎁 " + pl.name + " vào chơi qua mã của bạn: +" + REF_BONUS + " điểm GENIX" });
+      }
       send(pl, { type: "welcome", you: youPayload(pl), map: pl.map,
                  maps: MAPS.map(x => ({ id: x.id, name: x.name, backdrop: x.backdrop })) });
       roomEvent(rooms[pl.map], "👋 " + pl.name + " (" + creatureOf(pl.taxid).disp + ") vừa vào " + MAPBY[pl.map].name, pl.id);
@@ -250,11 +343,13 @@ wss.on("connection", ws => {
         send(pl, { type: "result", ok: true, text: "🗺 Đã tới " + MAPBY[m.map].name });
       }
     } else if (m.type === "chat") {
-      roomEvent(rooms[pl.map], "💬 " + pl.name + ": " + String(m.text || "").slice(0, 120), pl.id);
+      const txt = clean(m.text, 120); if (txt) roomEvent(rooms[pl.map], "💬 " + pl.name + ": " + txt, pl.id);
     }
   });
   ws.on("close", () => {
+    ipCount.set(ip, Math.max(0, (ipCount.get(ip) || 1) - 1));
     if (pl) {
+      refCodes.delete(pl.refCode);
       rooms[pl.map].players.delete(pl.id);
       roomEvent(rooms[pl.map], "👋 " + pl.name + " đã rời phòng", pl.id);
     }
@@ -268,4 +363,12 @@ setInterval(() => {
     room.players.forEach(pl => send(pl, { type: "state", map: room.map.id, you: youPayload(pl), players, npcs }));
   });
 }, 300);
+setInterval(() => {
+  const all = [];
+  Object.values(rooms).forEach(r => r.players.forEach(p => all.push(p)));
+  if (!all.length) return;
+  const top = all.sort((a, b) => b.merges - a.merges || b.kills - a.kills).slice(0, 10)
+    .map(p => ({ name: p.name, merges: p.merges, stage: stageOf(p), disp: creatureOf(p.taxid).disp }));
+  all.forEach(p => send(p, { type: "board", top, online: all.length }));
+}, 3000);
 server.listen(PORT, () => console.log("Server Son Hai Kinh dang chay: http://127.0.0.1:" + PORT + " (game + WebSocket)"));
