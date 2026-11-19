@@ -59,6 +59,7 @@ function newRefCode() {
 const pack = JSON.parse(fs.readFileSync(path.join(ROOT, "data/game_species_all.json"), "utf8"));
 const shk = JSON.parse(fs.readFileSync(path.join(ROOT, "data/shk_data.json"), "utf8"));
 const NAMES = JSON.parse(fs.readFileSync(path.join(ROOT, "data/server_names.json"), "utf8"));
+const TEN = JSON.parse(fs.readFileSync(path.join(ROOT, "data/ten_viet.json"), "utf8"));   // ten Viet / Han Viet cho moi loai
 const ROWS = pack.species;
 const BYID = {}; ROWS.forEach(r => { BYID[r[0]] = r; });
 const BYBUCKET = {}; ROWS.forEach(r => { (BYBUCKET[r[2]] = BYBUCKET[r[2]] || []).push(r); });
@@ -69,7 +70,7 @@ const powerOf = b => Math.round(30 * Math.pow(Math.max(b, 1) / 1000, 0.55));
 function creatureOf(t) {
   const r = BYID[t]; if (!r) return null;
   const n = NAMES[t];
-  return { taxid: t, disp: n ? n.vn : r[1], sci: r[1], bucket: r[2], genes: r[3],
+  return { taxid: t, disp: TEN[t] || (n ? n.vn : "Linh vật"), bucket: r[2], genes: r[3],
            blocks: r[4], cls: r[5], ord: r[6], fam: r[7], snake: !!r[8], group: n ? n.g : null };
 }
 
@@ -166,18 +167,18 @@ function moveRoom(pl, destId) {
 }
 function publicPlayer(pl) {
   const c = creatureOf(pl.taxid);
-  return { id: pl.id, name: pl.name, taxid: pl.taxid, disp: c.disp, sci: c.sci,
+  return { id: pl.id, name: pl.name, taxid: pl.taxid, disp: c.disp,
            x: Math.round(pl.x), y: Math.round(pl.y), hp: pl.hp,
            power: effPower(pl), stage: stageOf(pl), merges: pl.merges };
 }
 function publicNpc(n) {
   const c = creatureOf(n.taxid);
-  return { id: n.id, taxid: n.taxid, disp: c.disp, sci: c.sci,
+  return { id: n.id, taxid: n.taxid, disp: c.disp,
            x: Math.round(n.x), y: Math.round(n.y), power: powerOf(c.blocks) };
 }
 function youPayload(pl) {
   const c = creatureOf(pl.taxid);
-  return { id: pl.id, taxid: pl.taxid, disp: c.disp, sci: c.sci, hp: pl.hp, merges: pl.merges,
+  return { id: pl.id, taxid: pl.taxid, disp: c.disp, hp: pl.hp, merges: pl.merges,
            kills: pl.kills, power: effPower(pl), absorbed: pl.absorbed, gx: pl.gx, refCode: pl.refCode, refs: pl.refs,
            progress: partsProgress(pl), won: pl.won };
 }

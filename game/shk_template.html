@@ -25,7 +25,7 @@
   .mySpecies { display:flex; gap:12px; align-items:center; background:rgba(46,125,70,.16); border:1px solid #2e7d46; border-radius:12px; padding:10px; margin-bottom:12px; }
   .mySpecies img { width:86px; height:60px; object-fit:cover; border-radius:9px; flex:none; }
   .mySpecies .vn { font-weight:800; color:#fff; font-size:16px; }
-  .mySpecies .sci { font-style:italic; color:#a9c79b; font-size:12.5px; }
+  .mySpecies .sci { color:#a9c79b; font-size:12.5px; }
 
   /* ===== Sân khấu ===== */
   #stage { position:fixed; inset:0; overflow:hidden; }
@@ -64,7 +64,7 @@
   .card img { width:100%; height:96px; object-fit:cover; display:block; }
   .card .cap { padding:5px 9px 7px; background:rgba(6,22,12,.94); }
   .card .cap .vn { font-weight:700; font-size:13px; color:#fff; line-height:1.25; }
-  .card .cap .sci { font-style:italic; font-size:10.5px; color:#a9c79b; line-height:1.25; }
+  .card .cap .sci { font-size:10.5px; color:#a9c79b; line-height:1.25; }
   .card.merged { border-color:#57d95e; filter:saturate(.75); }
   .card .tick { position:absolute; top:6px; right:6px; background:#1d5c2a; color:#b6f09a; font-size:11px; font-weight:700; border-radius:20px; padding:2px 8px; }
   @keyframes bob { 0%,100% { margin-top:0; } 50% { margin-top:-7px; } }
@@ -77,7 +77,7 @@
   #sidePanel { position:absolute; top:64px; right:10px; z-index:8; width:250px; max-height:calc(100% - 196px); overflow-y:auto; padding:9px 10px;
                background:rgba(6,22,12,.8); border:1px solid #3f7a4c; border-radius:14px; backdrop-filter:blur(5px); }
   #sidePanel h3 { font-size:13px; color:#ffe9a8; margin:4px 0 6px; }
-  #panelHide { background:rgba(255,255,255,.08); color:#ffe9a8; border:1px solid #3f7a4c; border-radius:7px; cursor:pointer; font-size:13px; line-height:1; padding:3px 8px; flex:none; }
+  #panelHide { position:absolute; top:7px; right:8px; z-index:2; background:rgba(255,255,255,.08); color:#ffe9a8; border:1px solid #3f7a4c; border-radius:7px; cursor:pointer; font-size:13px; line-height:1; padding:3px 8px; flex:none; }
   #panelHide:hover { border-color:#ffd76a; }
   .mini { background:#1d4d2b; color:#ffe9a8; border:1px solid #3f7a4c; border-radius:8px; padding:3px 9px; font-size:11.5px; cursor:pointer; white-space:nowrap; }
   .mini:hover { background:#2a6b3c; }
@@ -86,8 +86,7 @@
   #liveBar.hidden { display:none; }
   .livetrack { width:130px; height:7px; background:rgba(255,255,255,.15); border-radius:4px; overflow:hidden; }
   #liveTimerFill { height:100%; width:100%; background:#ff5252; transition:width .2s linear; }
-  #livePanel { position:absolute; top:112px; right:262px; z-index:9; width:295px; max-height:calc(100% - 130px); overflow:auto;
-    background:rgba(10,16,10,.94); border:1px solid #b03a3a; border-radius:14px; padding:12px 14px; color:#eaffea; }
+  #livePanel { max-height:62vh; overflow:auto; background:rgba(40,8,8,.55); border:1px solid #b03a3a; border-radius:12px; padding:9px 10px; margin-bottom:8px; color:#eaffea; font-size:12.5px; }
   #livePanel.hidden { display:none; }
   #livePanel input[type="text"], #livePanel input:not([type]), #livePanel textarea { background:rgba(255,255,255,.08); color:#eaffea; border:1px solid #3f7a4c; border-radius:8px; padding:5px 8px; }
   #panelTab { position:absolute; top:64px; right:0; z-index:8; background:rgba(6,22,12,.85); color:#ffe9a8; border:1px solid #3f7a4c; border-right:none;
@@ -99,7 +98,7 @@
   #codexSearch { width:100%; padding:7px 9px; border-radius:8px; border:1px solid #3f7a4c; background:#0a1f12; color:#fff; font-size:13px; margin-bottom:6px; }
   .cx { display:flex; gap:7px; align-items:center; font-size:11.5px; padding:3px 4px; border-radius:7px; cursor:pointer; line-height:1.3; }
   .cx:hover { background:rgba(255,255,255,.07); }
-  .cx .sci { font-style:italic; color:#a9c79b; font-size:10.5px; display:block; }
+  .cx .sci { color:#a9c79b; font-size:10.5px; display:block; }
 
   /* Điều hướng map */
   #zoneNav { position:absolute; left:50%; transform:translateX(-50%); bottom:10px; z-index:8; display:flex; gap:7px; max-width:97vw; overflow-x:auto; padding:2px; }
@@ -116,7 +115,7 @@
   #encPanel img { width:138px; height:92px; object-fit:cover; border-radius:11px; flex:none; }
   #encPanel .inf { flex:1; min-width:0; }
   #encPanel h3 { color:#ffe9a8; font-size:19px; margin-bottom:2px; }
-  #encPanel .sci { font-style:italic; color:#a9c79b; font-size:12.5px; margin-bottom:6px; }
+  #encPanel .sci { color:#a9c79b; font-size:12.5px; margin-bottom:6px; }
   .cmp { display:inline-block; font-size:12px; font-weight:700; border-radius:16px; padding:2px 10px; margin-bottom:8px; }
   .cmp.weak { background:#1d5c2a; color:#b6f09a; } .cmp.even { background:#6b5a14; color:#ffe9a8; } .cmp.strong { background:#6e2318; color:#ffb0a0; }
   .actions { display:flex; gap:9px; flex-wrap:wrap; }
@@ -131,7 +130,7 @@
   .overlay .bgimg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.3; }
   .panel { position:relative; background:linear-gradient(180deg,#14301d,#0a1f12); border:1px solid #ffd76a; border-radius:18px; max-width:640px; width:100%; max-height:92%; overflow-y:auto; padding:24px 26px; box-shadow:0 22px 60px rgba(0,0,0,.65); }
   .panel h2 { color:#ffe9a8; font-size:24px; margin-bottom:9px; }
-  .panel .sci { font-style:italic; color:#a9c79b; }
+  .panel .sci { color:#a9c79b; }
   .panel p { font-size:14.5px; line-height:1.7; color:#d7e8cd; margin:7px 0; }
   .panel p b { color:#ffd76a; }
   .duo { display:flex; gap:12px; margin:10px 0; }
@@ -188,7 +187,7 @@
 
 <div id="onlinePanel" class="hidden">
   <h3 style="margin:0 0 6px">🌐 Chơi online nhiều người</h3>
-  <p style="font-size:12.5px;color:#cfe3c2;margin:0 0 8px">Vào thế giới chung: mỗi người được Sơn Hải Kinh random một loài thật, săn sinh linh hoang dã và săn lẫn nhau, tiến hoá theo đúng công thức bộ phận. Cần một server đang chạy — cách chạy/deploy xem file MULTIPLAYER.md trong dự án.</p>
+  <p style="font-size:12.5px;color:#cfe3c2;margin:0 0 8px">Vào thế giới chung: mỗi người được Sơn Hải Kinh ban cho một sinh linh, cùng săn linh thú hoang dã và săn lẫn nhau.</p>
   <input id="onlineName" placeholder="Tên của bạn" style="width:100%;box-sizing:border-box;margin:2px 0 6px">
   <input id="srvUrl" placeholder="ws://127.0.0.1:8788" style="width:100%;box-sizing:border-box;margin:2px 0 6px">
   <button class="btn" style="width:100%;margin:4px 0" onclick="connectOnline()">Kết nối &amp; vào chơi</button>
@@ -225,34 +224,29 @@
     <span id="qiWrap">✨ Linh khí <div id="qiTrack"><div id="qiFill"></div></div></span>
     <div class="livetrack"><div id="liveTimerFill"></div></div>
   </div>
-  <div id="livePanel" class="hidden">
-    <h3 style="margin:0 0 6px">🔴 Khán giả điều khiển bằng bình luận</h3>
-    <p style="font-size:12px;color:#cfe3c2;margin:0 0 8px">Khán giả gõ <b>«Săn»</b> hoặc <b>«Chạy»</b> — hết 10 giây, lệnh nào nhiều hơn sẽ được AI thực thi ngay.</p>
-    <div id="liveStatus" style="font-size:12.5px;margin-bottom:8px">Đang chờ vòng bình chọn…</div>
-    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="demoChk" onchange="toggleDemo(this.checked)"> 🎭 Mô phỏng bình luận (để test thử)</label>
-    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="bridgeChk" onchange="toggleBridge(this.checked)"> 🌉 Cầu nối chat thật TikTok / YouTube / Facebook</label>
-    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="ttsChk"> 🔊 Thiên Đạo đọc thành tiếng (giọng trình duyệt)</label>
-    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="usageChk"> ⚡ Dùng usage Claude Pro (ưu tiên; hết usage tự chuyển sang API key)</label>
-    <div id="aiStatus" style="font-size:11.5px;color:#c9a6ff;margin:2px 0 4px">AI Thiên Đạo: chưa kết nối cầu nối</div>
-    <input id="bridgeUrl" value="http://127.0.0.1:8787" style="width:100%;margin:2px 0 6px;box-sizing:border-box">
-    <textarea id="pasteBox" rows="3" placeholder="Hoặc dán bình luận vào đây, mỗi dòng một bình luận…" style="width:100%;box-sizing:border-box"></textarea>
-    <button class="btn" style="width:100%;margin:4px 0" onclick="pasteVotes()">Nạp bình luận đã dán</button>
-    <div id="liveFeed" style="margin-top:6px"></div>
-    <button class="btn" style="width:100%;margin-top:6px" onclick="toggleLive(false)">Tắt LIVE</button>
-  </div>
   <div id="sidePanel">
-    <h3 style="margin:0 0 4px">🧬 Tiến hoá theo Sơn Hải Kinh</h3>
-    <div id="evoPanel"></div>
-    <hr style="border:none;border-top:1px solid rgba(255,255,255,.12);margin:8px 0">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-      <h3 style="margin:0">🎯 Con mồi dễ nhất ở đây</h3>
-      <button id="panelHide" onclick="hidePanel()" title="Thu gọn panel">»</button>
+    <div id="livePanel" class="hidden">
+      <h3 style="margin:0 0 6px;padding-right:34px">🔴 Khán giả điều khiển</h3>
+      <p style="font-size:12px;color:#cfe3c2;margin:0 0 8px">Khán giả gõ <b>«Săn»</b> hoặc <b>«Chạy»</b> — hết 10 giây, lệnh nào nhiều hơn sẽ được AI thực thi ngay.</p>
+      <div id="liveStatus" style="font-size:12.5px;margin-bottom:8px">Đang chờ vòng bình chọn…</div>
+      <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="demoChk" onchange="toggleDemo(this.checked)"> 🎭 Mô phỏng bình luận</label>
+      <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="bridgeChk" onchange="toggleBridge(this.checked)"> 🌉 Cầu nối chat thật TikTok / YouTube / Facebook</label>
+      <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="ttsChk"> 🔊 Thiên Đạo đọc thành tiếng (giọng trình duyệt)</label>
+      <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="usageChk"> ⚡ Dùng usage Claude Pro (ưu tiên; hết usage tự chuyển sang API key)</label>
+      <div id="aiStatus" style="font-size:11.5px;color:#c9a6ff;margin:2px 0 4px">AI Thiên Đạo: chưa kết nối cầu nối</div>
+      <input id="bridgeUrl" value="http://127.0.0.1:8787" style="width:100%;margin:2px 0 6px;box-sizing:border-box">
+      <textarea id="pasteBox" rows="3" placeholder="Hoặc dán bình luận vào đây, mỗi dòng một bình luận…" style="width:100%;box-sizing:border-box"></textarea>
+      <button class="btn" style="width:100%;margin:4px 0" onclick="pasteVotes()">Nạp bình luận đã dán</button>
+      <div id="liveFeed" style="margin-top:6px"></div>
+      <button class="btn" style="width:100%;margin-top:6px" onclick="toggleLive(false)">Tắt LIVE</button>
     </div>
+    <button id="panelHide" onclick="hidePanel()" title="Thu gọn panel">»</button>
+    <h3 style="margin:0;padding-right:34px">🎯 Con mồi dễ nhất ở đây</h3>
     <div id="sugList" style="margin-top:6px"></div>
     <button class="btn" style="width:100%;margin:4px 0 8px" onclick="randomEncounter()">🎲 Tìm con mồi</button>
     <h3 id="codexToggle" onclick="toggleCodex()" style="cursor:pointer">📖 Tra cứu muôn loài <span id="codexArrow">▸</span></h3>
     <div id="codexBox" class="hidden">
-      <input id="codexSearch" placeholder="Gõ tên loài hoặc TaxID…" oninput="renderCodex()">
+      <input id="codexSearch" placeholder="Gõ tên loài…" oninput="renderCodex()">
       <div id="codexList"></div>
     </div>
   </div>
@@ -309,7 +303,7 @@ function toast(msg, ms){
 /* Một "sinh linh" thống nhất từ loài nổi bật (có ảnh) hoặc loài thường (toàn bộ CSDL) */
 function fromFeatured(f){
   const r = ALLBY[f.t] || [];
-  return { taxid:f.t, disp:f.vn, sci:f.n, label:GROUP_VN[f.g] || f.g, blocks:f.b, genes:f.ge,
+  return { taxid:f.t, disp:f.vn, label:GROUP_VN[f.g] || f.g, blocks:f.b, genes:f.ge,
            art:ART.species[f.t] || (ART.portraits || {})[f.t], featured:true, group:f.g, bucket:null,
            cls:r[5] || null, ord:r[6] || null, fam:r[7] || null, snake:!!r[8] };
 }
@@ -328,7 +322,7 @@ function classArt(cls){
 function fromRow(r){
   const f = FEAT[r[0]];
   if (f) return fromFeatured(f);
-  return { taxid:r[0], disp:r[1], sci:r[1], label:BUCKET_VN[r[2]] || r[2], blocks:r[4], genes:r[3],
+  return { taxid:r[0], disp:r[1], label:BUCKET_VN[r[2]] || r[2], blocks:r[4], genes:r[3],
            art:classArt(r[5]), featured:false, group:null, bucket:r[2], cls:r[5] || null,
            ord:r[6] || null, fam:r[7] || null, snake:!!r[8] };
 }
@@ -371,7 +365,7 @@ function renderLogin(){
       '<label>Chào mừng trở lại,</label>' +
       '<div style="font-size:19px;font-weight:800;color:#fff;margin-bottom:10px">' + last + '</div>' +
       '<div class="mySpecies"><img src="' + artOf(c) + '"><div><div class="vn">' + c.disp + '</div>' +
-      '<div class="sci">' + c.sci + ' · ' + c.label + ' · ' + lineageOf(c) + '</div></div></div>' +
+      '<div class="sci">' + c.label + ' · ' + lineageOf(c) + '</div></div></div>' +
       '<button class="btn big" onclick="enterGame(false)">▶ Vào thế giới Sơn Hải</button>' +
       '<button class="btn ghost big" style="margin-top:9px" onclick="logout()">Đổi người chơi khác</button>';
   } else {
@@ -407,7 +401,7 @@ function showReveal(){
     "<h2>🎲 SƠN HẢI KINH ĐÃ CHỌN CHO BẠN</h2>" +
     '<figure style="border-radius:12px;overflow:hidden;border:1px solid #ffd76a;margin:8px 0"><img src="' + artOf(c) + '" style="width:100%;height:230px;object-fit:cover;display:block"></figure>' +
     "<p style='font-size:19px'><b>" + c.disp + "</b></p>" +
-    "<p><span class='sci'>" + c.sci + "</span> · " + c.label + " · " + lineageOf(c) + "</p>" +
+    "<p>" + c.label + " · " + lineageOf(c) + "</p>" +
     "<p>Quê nhà của bạn: <b>" + home.name + "</b>. Từ đây, hãy tự lượng sức: <b>khoẻ thì đi săn</b> gộp gen để tiến hoá qua 8 dị thú huyền thoại — Nhĩ Thử → Cửu Vĩ Hồ → Tất Phương → Cùng Kỳ → Tương Liễu → Đế Giang → Chúc Long → Ứng Long; <b>yếu thì trốn</b> sang map khác để tránh kẻ mạnh.</p>" +
     '<button class="btn big" onclick="enterGame(true)">Bắt đầu phiêu lưu →</button>';
   $("revealOverlay").classList.remove("hidden");
@@ -483,7 +477,7 @@ function updateHUD(){
   const c = me.creature;
   $("hudArt").src = artOf(c);
   $("hudName").textContent = c.disp;
-  $("hudSci").textContent = c.sci + " · " + lineageOf(c);
+  $("hudSci").textContent = lineageOf(c);
   $("hpFill").style.width = Math.max(0, prog.hp) + "%";
   $("hudStat").innerHTML = "🔗 Đã gộp: <b>" + prog.merges + "</b> loài · ⚔ Lực: <b>" + fmt(effPower()) + "</b><br>✦ Hình dạng: <b>" + beastName() + "</b> · Săn: <b>" + prog.kills + "</b>" + (typeof gxBalance === "function" ? "<br>✧ GENIX: <b>" + gxBalance() + "</b>" : "");
 }
@@ -543,7 +537,7 @@ function renderLayer(){
       d.className = "card " + (c.boss ? "boss" : "viewer") + (absorbed ? " merged" : "");
       d.style.left = pos.x + "%"; d.style.top = pos.y + "%";
       d.innerHTML = '<img src="' + artOf(c) + '"><span class="tick" style="background:' + (c.boss ? "#8a1d1d" : "#7a1d6a") + '">' + (c.boss ? "👑 Hộ pháp" : "👤 " + esc(c.viewer)) + '</span>' +
-        '<div class="cap"><div class="vn">' + esc(c.disp) + '</div><div class="sci">' + esc(c.sci) + "</div></div>";
+        '<div class="cap"><div class="vn">' + esc(c.disp) + "</div></div>";
       d.onclick = () => openEncounter(c, false);
       layer.appendChild(d);
     } else if (c.featured){
@@ -551,20 +545,20 @@ function renderLayer(){
       d.className = "card" + (absorbed ? " merged" : "");
       d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.7) + "s";
       d.innerHTML = '<img src="' + c.art + '">' + (absorbed ? '<span class="tick">✓ Đã gộp</span>' : "") +
-        '<div class="cap"><div class="vn">' + c.disp + '</div><div class="sci">' + c.sci + "</div></div>";
+        '<div class="cap"><div class="vn">' + c.disp + "</div></div>";
       d.onclick = () => openEncounter(c, false);
       layer.appendChild(d);
     } else if (c.art) {
       const d = document.createElement("div");
       d.className = "card"; d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.9) + "s";
-      d.innerHTML = '<img src="' + c.art + '"><div class="cap"><div class="sci">' + c.sci + "</div></div>";
+      d.innerHTML = '<img src="' + c.art + '"><div class="cap"><div class="vn">' + c.disp + "</div></div>";
       d.onclick = () => openEncounter(c, false);
       layer.appendChild(d);
     } else {
       const d = document.createElement("div");
       d.className = "amb"; d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.9) + "s";
-      d.innerHTML = "🐾 <i>" + c.sci + "</i>";
-      d.title = c.sci + " · " + c.label;
+      d.innerHTML = "🐾 " + c.disp;
+      d.title = c.disp + " · " + c.label;
       d.onclick = () => openEncounter(c, false);
       layer.appendChild(d);
     }
@@ -582,7 +576,7 @@ function openEncounter(c, ambush){
   const cmp = cmpOf(c);
   $("encPanel").innerHTML =
     '<img src="' + (c.art || ART.zones[curMap.backdrop]) + '">' +
-    '<div class="inf"><h3>' + c.disp + '</h3><div class="sci">' + c.sci + " · " + c.label + " · sống tại " + curMap.name + "</div>" +
+    '<div class="inf"><h3>' + c.disp + '</h3><div class="sci">' + c.label + " · sống tại " + curMap.name + "</div>" +
     (absorbed ? '<span class="cmp weak">✓ Loài này đã có trong bộ gen của bạn</span>'
               : '<span class="cmp ' + cmp.cls + '">' + cmp.txt + "</span>") +
     '<div class="actions">' +
@@ -674,7 +668,7 @@ function renderCodex(){
   el.innerHTML = hits.length ? hits.map(r => {
     const c = fromRow(r);
     const ms = mapsOfBucket(r[2]).map(m => m.name).slice(0, 2).join(", ");
-    return '<div class="cx" onclick="toast(\'' + c.sci.replace(/'/g, "") + " · " + c.label + (ms ? " · xuất hiện ở: " + ms : "") + '\')"><div>' + c.disp + '<span class="sci">' + c.sci + " · " + c.label + "</span></div></div>";
+    return '<div class="cx" onclick="toast(\'' + c.disp.replace(/'/g, "") + " · " + c.label + (ms ? " · xuất hiện ở: " + ms : "") + '\')"><div>' + c.disp + '<span class="sci">' + c.label + "</span></div></div>";
   }).join("") : '<p style="font-size:11.5px;color:#9fb894">Không tìm thấy loài nào.</p>';
 }
 /* ===== Panel tiến hoá + tìm loài theo bộ phận còn thiếu ===== */
@@ -788,7 +782,7 @@ function aiHunt(){
   let pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
     .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks));
   if (LIVE.suggest){
-    const k = LIVE.suggest, hit = pool.find(c => (norm(c.disp) + " " + norm(c.sci)).includes(k) && powerOf(c.blocks) <= effPower() * 1.1);
+    const k = LIVE.suggest, hit = pool.find(c => norm(c.disp).includes(k) && powerOf(c.blocks) <= effPower() * 1.1);
     if (hit) pool = [hit].concat(pool.filter(c => c !== hit));
     LIVE.suggest = "";
   }
@@ -1037,7 +1031,7 @@ function connectOnline(){
   toast("🌐 Đang kết nối " + url + " ...");
   ws.onopen = () => ws.send(JSON.stringify({ type:"join", name, ref: REF_PARAM }));
   ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch(e){ return; } handleOnlineMsg(m); };
-  ws.onerror = () => toast("❌ Không nối được server — server đã chạy chưa? (xem MULTIPLAYER.md)");
+  ws.onerror = () => toast("❌ Không nối được máy chủ");
   ws.onclose = () => { if (ONLINE.on){ ONLINE.on = false; toast("🔌 Đã ngắt kết nối online"); } };
 }
 function disconnectOnline(){ if (ONLINE.ws) try { ONLINE.ws.close(); } catch(e){} ONLINE.on = false; location.reload(); }
@@ -1082,7 +1076,7 @@ function renderOnline(){
     const c = creatureByTaxid(n.taxid);
     const d = document.createElement("div");
     d.className = "card"; d.style.left = n.x + "%"; d.style.top = n.y + "%";
-    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><div class="cap"><div class="vn">' + n.disp + '</div><div class="sci">' + n.sci + "</div></div>";
+    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><div class="cap"><div class="vn">' + n.disp + "</div></div>";
     d.onclick = ev => { ev.stopPropagation(); onlineEncounter("npc", n); };
     layer.appendChild(d);
   });
@@ -1090,7 +1084,7 @@ function renderOnline(){
     const c = creatureByTaxid(p.taxid);
     const d = document.createElement("div");
     d.className = "card player"; d.style.left = p.x + "%"; d.style.top = p.y + "%";
-    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><span class="tick" style="background:#7a4d00">👤 ' + esc(p.name) + (p.stage ? " · Cấp " + p.stage : "") + '</span><div class="cap"><div class="vn">' + p.disp + '</div><div class="sci">' + p.sci + "</div></div>";
+    d.innerHTML = '<img src="' + (c ? artOf(c) : ART.login) + '"><span class="tick" style="background:#7a4d00">👤 ' + esc(p.name) + (p.stage ? " · Cấp " + p.stage : "") + '</span><div class="cap"><div class="vn">' + p.disp + "</div></div>";
     d.onclick = ev => { ev.stopPropagation(); onlineEncounter("player", p); };
     layer.appendChild(d);
   });
@@ -1102,7 +1096,7 @@ function onlineEncounter(kind, e){
   const cmp = tp <= myP * 0.85 ? "🟢 Yếu hơn bạn — săn được" : (tp <= myP * 1.15 ? "🟡 Ngang sức bạn" : "🔴 Mạnh hơn bạn — nên trốn!");
   $("encPanel").innerHTML =
     '<img src="' + (c ? artOf(c) : ART.login) + '">' +
-    '<div class="inf"><h3>' + (kind === "player" ? "👤 " + esc(e.name) + " — " : "") + e.disp + '</h3><div class="sci">' + e.sci + " · ⚔ Lực: " + tp + " · " + cmp + "</div>" +
+    '<div class="inf"><h3>' + (kind === "player" ? "👤 " + esc(e.name) + " — " : "") + e.disp + '</h3><div class="sci">⚔ Lực: ' + tp + " · " + cmp + "</div>" +
     '<div class="row"><button class="btn" onclick="onlineHunt()">⚔️ Săn</button>' +
     '<button class="btn" onclick="onlineFlee()">🏃 Trốn</button>' +
     '<button class="btn" onclick="closeEnc()">Đóng</button></div></div>';
@@ -1159,7 +1153,7 @@ function shareInfo(){
   const online = ONLINE.on;
   const stage = online ? (ONLINE.progress ? ONLINE.progress.stage : 0) : formStage();
   const b = stage ? BEASTS[stage - 1] : null;
-  return { name: me.name, title: b ? b.name : me.creature.disp, han: b ? b.han : "", base: me.creature.disp, sci: me.creature.sci,
+  return { name: me.name, title: b ? b.name : me.creature.disp, han: b ? b.han : "", base: me.creature.disp,
            merges: prog.merges, power: effPower(), stage, art: stage ? ART.forms[stage] : artOf(me.creature) };
 }
 let shareBusy = 0;
@@ -1180,7 +1174,7 @@ function drawShare(){
     x.fillText("SƠN HẢI KINH PHIÊU LƯU KÝ", W / 2, 96);
     const fit = (t, px, wt) => { let s2 = px; do { x.font = wt + " " + s2 + "px sans-serif"; s2 -= 2; } while (x.measureText(t).width > W - 150 && s2 > 24); };
     x.fillStyle = "#fff"; fit("Tôi là " + info.title, 84, "bold"); x.fillText("Tôi là " + info.title + (info.han ? " " + info.han : ""), W / 2, 1000);
-    x.fillStyle = "#cfe8c0"; fit(info.base + " · " + info.sci, 40, "italic"); x.fillText(info.base + " · " + info.sci, W / 2, 1062);
+    x.fillStyle = "#cfe8c0"; fit(info.base, 40, "italic"); x.fillText(info.base, W / 2, 1062);
     x.fillStyle = "#ffe9a8"; x.font = "bold 44px sans-serif";
     x.fillText("🧬 " + info.merges + " loài  ·  ⚔ " + info.power + "  ·  " + (info.stage ? "Cấp " + info.stage + "/8" : "Nguyên hình"), W / 2, 1136);
     x.fillStyle = "#fff"; x.font = "bold 40px sans-serif"; x.fillText("Bạn sẽ tái sinh thành loài nào?", W / 2, 1210);
