@@ -50,3 +50,5 @@ Thiết lập theo nền tảng (đặt biến môi trường trước khi chạ
 
 Lưu ý: cầu nối chỉ chạy trên máy của bạn và chỉ bạn mới truy cập được
 (127.0.0.1). Token/API key nằm ở máy bạn, không đi vào file game.
+
+> v6.2: cầu nối nay nhận cả quà/tim/follow/share và có AI "Thiên Đạo" — xem `LIVE_TIKTOK.md`.

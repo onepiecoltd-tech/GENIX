@@ -31,3 +31,7 @@ trailer/segs/
 trailer/*.mp4
 trailer/*.wav
 trailer/vo/*.wav
+
+# Khoa API / cau hinh live cua streamer
+live.env
+cf.log

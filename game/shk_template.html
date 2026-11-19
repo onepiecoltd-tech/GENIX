@@ -155,6 +155,22 @@
   #shareModal .frow { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
   #shareModal .fbtn { flex:1; min-width:90px; font-size:12px; }
   #shareModal .note { font-size:11px; color:#9fb894; margin-top:8px; line-height:1.4; }
+
+  #tdBubble { position:absolute; left:50%; bottom:128px; transform:translateX(-50%); z-index:12; max-width:min(560px,86vw); text-align:center;
+              background:rgba(20,10,40,.88); border:1px solid #c9a6ff; color:#f1e6ff; border-radius:16px; padding:8px 16px; font-size:15px; line-height:1.4;
+              box-shadow:0 0 22px rgba(170,120,255,.45); pointer-events:none; transition:opacity .4s; opacity:0; }
+  #tdBubble b { color:#ffd76a; }
+  #tdBubble small { display:block; color:#c9a6ff; font-size:11px; letter-spacing:.06em; }
+  #liveTicker { position:absolute; left:10px; top:118px; z-index:11; width:230px; pointer-events:none; font-size:12.5px; }
+  #liveTicker .tk { background:rgba(6,22,12,.78); border-left:3px solid #ffd76a; border-radius:6px; padding:3px 8px; margin-bottom:4px; color:#e8f5dc; animation:tkin .35s ease-out; }
+  #liveTicker .tk.gift { border-color:#ff6ad5; } #liveTicker .tk.follow { border-color:#57d95e; } #liveTicker .tk.share { border-color:#6ae6ff; }
+  @keyframes tkin { from { opacity:0; transform:translateX(-16px); } to { opacity:1; transform:none; } }
+  #qiWrap { display:flex; align-items:center; gap:6px; font-size:12px; }
+  #qiTrack { width:90px; height:8px; background:#2c2147; border-radius:6px; overflow:hidden; }
+  #qiFill { height:100%; width:0; background:linear-gradient(90deg,#ff6ad5,#ffd76a); transition:width .3s; }
+  .fxFlash { animation:fxflash 1.1s ease-out; }
+  @keyframes fxflash { 0% { box-shadow:inset 0 0 0 0 rgba(255,215,106,0); } 25% { box-shadow:inset 0 0 160px 40px rgba(255,215,106,.55); } 100% { box-shadow:inset 0 0 0 0 rgba(255,215,106,0); } }
+  .card.viewer { border-color:#ff6ad5; } .card.boss { border-color:#ff4d4d; box-shadow:0 0 26px rgba(255,77,77,.7); }
 </style>
 </head>
 <body>
@@ -189,6 +205,8 @@
   <canvas id="fxCanvas"></canvas>
   <div id="zoneTitle"><div class="zn" id="zoneName">—</div><div class="zd" id="zoneDesc">—</div></div>
   <div id="encounterLayer"></div>
+  <div id="liveTicker"></div>
+  <div id="tdBubble"></div>
   <div id="hud">
     <img class="avatar" id="hudArt" alt="">
     <div class="who"><div class="nm" id="hudName">—</div><div class="sc" id="hudSci">—</div></div>
@@ -204,6 +222,7 @@
   <div id="liveBar" class="hidden">
     <span>🔴 <b>LIVE</b></span><span id="liveCount">⏱ 10.0s</span>
     <span>🗡 Săn <b id="liveSan">0</b></span><span>🏃 Chạy <b id="liveChay">0</b></span>
+    <span id="qiWrap">✨ Linh khí <div id="qiTrack"><div id="qiFill"></div></div></span>
     <div class="livetrack"><div id="liveTimerFill"></div></div>
   </div>
   <div id="livePanel" class="hidden">
@@ -212,6 +231,9 @@
     <div id="liveStatus" style="font-size:12.5px;margin-bottom:8px">Đang chờ vòng bình chọn…</div>
     <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="demoChk" onchange="toggleDemo(this.checked)"> 🎭 Mô phỏng bình luận (để test thử)</label>
     <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="bridgeChk" onchange="toggleBridge(this.checked)"> 🌉 Cầu nối chat thật TikTok / YouTube / Facebook</label>
+    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="ttsChk"> 🔊 Thiên Đạo đọc thành tiếng (giọng trình duyệt)</label>
+    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="usageChk"> ⚡ Dùng usage Claude Pro (ưu tiên; hết usage tự chuyển sang API key)</label>
+    <div id="aiStatus" style="font-size:11.5px;color:#c9a6ff;margin:2px 0 4px">AI Thiên Đạo: chưa kết nối cầu nối</div>
     <input id="bridgeUrl" value="http://127.0.0.1:8787" style="width:100%;margin:2px 0 6px;box-sizing:border-box">
     <textarea id="pasteBox" rows="3" placeholder="Hoặc dán bình luận vào đây, mỗi dòng một bình luận…" style="width:100%;box-sizing:border-box"></textarea>
     <button class="btn" style="width:100%;margin:4px 0" onclick="pasteVotes()">Nạp bình luận đã dán</button>
@@ -399,7 +421,7 @@ const POS = [ {x:4,y:31},{x:23,y:57},{x:39,y:27},{x:56,y:53},{x:71,y:30},{x:85,y
               {x:31,y:38},{x:47,y:70},{x:79,y:71},{x:89,y:33} ];
 const WIN_MERGES = 40;
 
-function effPower(){ if (window.ONLINE && window.ONLINE.on) return window.ONLINE.power || 0; return powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); }
+function effPower(){ if (window.ONLINE && window.ONLINE.on) return window.ONLINE.power || 0; const base = powerOf(me.creature.blocks) + (prog ? prog.bonus : 0); return (typeof LIVE !== "undefined" && LIVE.buffUntil > Date.now()) ? Math.round(base * 1.2) : base; }
 /* ===== Tiến hoá theo công thức Sơn Hải Kinh: dị thú = ghép bộ phận của các loài thật =====
    Mỗi cấp cần: (1) đủ số lần gộp gen, (2) đủ "bộ phận" — tức đã săn/gộp đúng nhóm loài
    mà sách mô tả (vd Ứng Long: vảy cá + sừng trâu + thân rắn + vuốt ưng + cánh chim). */
@@ -516,7 +538,15 @@ function renderLayer(){
   curTargets.forEach((c, i) => {
     const pos = POS[i % POS.length];
     const absorbed = prog.absorbed.includes(c.taxid);
-    if (c.featured){
+    if (c.viewer || c.boss){
+      const d = document.createElement("div");
+      d.className = "card " + (c.boss ? "boss" : "viewer") + (absorbed ? " merged" : "");
+      d.style.left = pos.x + "%"; d.style.top = pos.y + "%";
+      d.innerHTML = '<img src="' + artOf(c) + '"><span class="tick" style="background:' + (c.boss ? "#8a1d1d" : "#7a1d6a") + '">' + (c.boss ? "👑 Hộ pháp" : "👤 " + esc(c.viewer)) + '</span>' +
+        '<div class="cap"><div class="vn">' + esc(c.disp) + '</div><div class="sci">' + esc(c.sci) + "</div></div>";
+      d.onclick = () => openEncounter(c, false);
+      layer.appendChild(d);
+    } else if (c.featured){
       const d = document.createElement("div");
       d.className = "card" + (absorbed ? " merged" : "");
       d.style.left = pos.x + "%"; d.style.top = pos.y + "%"; d.style.animationDelay = (i * 0.7) + "s";
@@ -682,7 +712,8 @@ function huntPart(stage, idx){
 
 /* ===== Chế độ LIVE: khán giả bình luận Săn / Chạy, AI thực thi lệnh thắng sau 10 giây ===== */
 const LIVE = { on:false, phase:"idle", san:0, chay:0, voters:new Set(), endsAt:0, tick:null,
-               demoTick:null, bridgeTick:null, since:0, feed:[] };
+               demoTick:null, bridgeTick:null, since:0, feed:[],
+               seqE:0, seqA:0, epoch:0, qi:0, buffUntil:0, mapVotes:{}, suggest:"", aiCmd:null, stateTick:null };
 const DEMO_NAMES = ["MinhAnh", "TuanBeo", "LinhChi", "DragonVN", "HuyHoang", "TrangMoon", "KhoaNe", "BeNa", "HaiDang", "PhuongLy", "BaoChau", "NamLun"];
 function voteKind(text){
   const t = String(text).toLowerCase();
@@ -690,15 +721,30 @@ function voteKind(text){
   if (t.includes("chạy") || t.includes("trốn") || /(^|\s)chay(\s|$|!|\.)/.test(t) || /(^|\s)tron(\s|$|!|\.)/.test(t)) return "chay";
   return null;
 }
+function norm(t){ return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim(); }
+function mapFromText(t){
+  const n = norm(t);
+  if (!/^(map|di|toi|den)\s/.test(n)) return null;
+  const rest = n.replace(/^(map|di|toi|den)\s+/, "");
+  return MAPS.find(m => norm(m.name).includes(rest) || m.id.replace(/-/g, " ").includes(rest) || rest.includes(m.id.replace(/-/g, " "))) || null;
+}
 function castVote(user, text){
   if (!LIVE.on || LIVE.phase !== "vote") return;
+  const m = mapFromText(text);
+  if (m){ (LIVE.mapVotes[m.id] = LIVE.mapVotes[m.id] || new Set()).add(String(user || "anon").toLowerCase()); return; }
+  const ls = norm(text).match(/^loai\s+(.{2,24})$/);
+  if (ls){ LIVE.suggest = ls[1]; return; }
   const k = voteKind(text); if (!k) return;
   const u = String(user || "anon").toLowerCase();
   if (LIVE.voters.has(u)) return;
   LIVE.voters.add(u); LIVE[k]++;
   LIVE.feed.unshift({ user: user, text: text }); LIVE.feed = LIVE.feed.slice(0, 7);
-  $("liveFeed").innerHTML = LIVE.feed.map(x => '<div style="font-size:12px;padding:2px 0;border-bottom:1px dashed rgba(255,255,255,.07)"><b>' + x.user + ":</b> " + x.text + "</div>").join("");
+  renderFeed();
   renderLive();
+}
+function renderFeed(){
+  const el = $("liveFeed"); if (!el) return;
+  el.innerHTML = LIVE.feed.map(x => '<div style="font-size:12px;padding:2px 0;border-bottom:1px dashed rgba(255,255,255,.07)"><b>' + esc(x.user) + ":</b> " + esc(x.text) + "</div>").join("");
 }
 function renderLive(){
   const bar = $("liveBar"); if (!bar) return;
@@ -720,18 +766,32 @@ function startRound(){
 function endRound(){
   clearInterval(LIVE.tick); LIVE.phase = "act";
   const san = LIVE.san, chay = LIVE.chay;
-  const act = (san === 0 && chay === 0) ? "idle" : (san >= chay ? "san" : "chay");
-  $("liveStatus").innerHTML = "Kết quả: 🗡 Săn " + san + " — 🏃 Chạy " + chay + (act === "san" ? " → <b>AI SĂN!</b>" : act === "chay" ? " → <b>AI CHẠY!</b>" : " → không có lệnh nào, AI chờ vòng sau");
+  let act = (san === 0 && chay === 0) ? "idle" : (san >= chay ? "san" : "chay");
+  let goMapId = null;
+  const mv = Object.entries(LIVE.mapVotes).map(([id, set]) => [id, set.size]).sort((a, b) => b[1] - a[1])[0];
+  if (mv && mv[1] >= 2 && mv[1] > san && mv[1] > chay && curMap && mv[0] !== curMap.id){ act = "map"; goMapId = mv[0]; }
+  let byAI = false;
+  if (act === "idle" && LIVE.aiCmd && Date.now() - LIVE.aiCmd.at < 25000){            // khan gia chua quyet -> AI tu lai
+    const c = LIVE.aiCmd; LIVE.aiCmd = null; byAI = true;
+    if (c.do === "hunt") act = "san"; else if (c.do === "flee") act = "chay"; else if (c.do === "travel" && c.map && curMap && c.map !== curMap.id){ act = "map"; goMapId = c.map; }
+  }
+  LIVE.mapVotes = {};
+  $("liveStatus").innerHTML = "Kết quả: 🗡 Săn " + san + " — 🏃 Chạy " + chay + (act === "map" ? " → <b>ĐI " + esc((MAPBY[goMapId] || {}).name || "") + "!</b>" : act === "san" ? " → <b>AI SĂN!</b>" : act === "chay" ? " → <b>AI CHẠY!</b>" : " → không có lệnh nào, AI chờ vòng sau") + (byAI ? " (Thiên Đạo tự quyết)" : "");
   renderLive();
   setTimeout(() => {
     if (!LIVE.on || !prog) return;
-    if (act === "san") aiHunt(); else if (act === "chay") aiFlee();
+    if (act === "san") aiHunt(); else if (act === "chay") aiFlee(); else if (act === "map" && MAPBY[goMapId]){ toast("🔴 LIVE: cả phòng chọn đi <b>" + esc(MAPBY[goMapId].name) + "</b>!"); closeEnc(); goMap(MAPBY[goMapId], "travel"); }
     if (prog.hp > 0) setTimeout(startRound, 2500);
   }, 1200);
 }
 function aiHunt(){
-  const pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
+  let pool = curTargets.filter(c => !prog.absorbed.includes(c.taxid))
     .sort((a, b) => powerOf(a.blocks) - powerOf(b.blocks));
+  if (LIVE.suggest){
+    const k = LIVE.suggest, hit = pool.find(c => (norm(c.disp) + " " + norm(c.sci)).includes(k) && powerOf(c.blocks) <= effPower() * 1.1);
+    if (hit) pool = [hit].concat(pool.filter(c => c !== hit));
+    LIVE.suggest = "";
+  }
   if (!pool.length){ toast("🔴 LIVE: hết con mồi ở map này — AI tự trốn sang map khác!"); aiFlee(); return; }
   currentEnc = pool[0];
   toast("🔴 LIVE: AI săn <b>" + pool[0].disp + "</b> theo lệnh khán giả!");
@@ -751,7 +811,7 @@ function toggleLive(on){
     startRound();
   } else {
     LIVE.phase = "idle";
-    clearInterval(LIVE.tick); clearInterval(LIVE.demoTick); clearInterval(LIVE.bridgeTick);
+    clearInterval(LIVE.tick); clearInterval(LIVE.demoTick); clearInterval(LIVE.bridgeTick); clearInterval(LIVE.stateTick);
     const d = $("demoChk"); if (d) d.checked = false;
     const b = $("bridgeChk"); if (b) b.checked = false;
   }
@@ -766,16 +826,124 @@ function toggleDemo(on){
     castVote(n, r < 0.48 ? "Săn" : r < 0.82 ? "Chạy" : (r < 0.92 ? "săn nó đi mn" : "chạy mau, nó mạnh lắm"));
   }, 900);
 }
+function bridgeBase(){ return ($("bridgeUrl").value || "http://127.0.0.1:8787").replace(/\/$/, ""); }
+$("usageChk").addEventListener("change", e => {          // nút bật/tắt usage Claude Pro (ưu tiên usage, hết thì dùng API key)
+  fetch(bridgeBase() + "/ai", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ use_usage: e.target.checked }) })
+    .catch(() => { $("aiStatus").textContent = "AI Thiên Đạo: không nối được cầu nối để đổi chế độ usage"; });
+});
 function toggleBridge(on){
-  clearInterval(LIVE.bridgeTick);
-  if (!on) return;
+  clearInterval(LIVE.bridgeTick); clearInterval(LIVE.stateTick);
+  if (!on){ $("aiStatus").textContent = "AI Thiên Đạo: chưa kết nối cầu nối"; return; }
   const step = () => {
-    const url = ($("bridgeUrl").value || "http://127.0.0.1:8787").replace(/\/$/, "");
-    fetch(url + "/votes?since=" + LIVE.since).then(r => r.json()).then(j => {
-      (j.votes || []).forEach(v => { if (v.ts) LIVE.since = Math.max(LIVE.since, v.ts); castVote(v.user, v.text); });
-    }).catch(() => {});
+    fetch(bridgeBase() + "/poll?e=" + LIVE.seqE + "&a=" + LIVE.seqA).then(r => r.json()).then(j => {
+      if (j.epoch && j.epoch !== LIVE.epoch){ if (LIVE.epoch){ LIVE.seqE = 0; LIVE.seqA = 0; return step(); } LIVE.epoch = j.epoch; }
+      (j.events || []).forEach(ev => { LIVE.seqE = Math.max(LIVE.seqE, ev.seq || 0); handleLiveEvent(ev); });
+      (j.actions || []).forEach(a => { LIVE.seqA = Math.max(LIVE.seqA, a.seq || 0); handleAiAction(a); });
+      const ai = j.ai || {};
+      if (document.activeElement !== $("usageChk")) $("usageChk").checked = !!ai.use_usage;
+      const lab = ai.mode === "claude" ? (ai.backend === "usage" ? "Claude Pro usage (" : "Claude API (") + ai.model + ") ✓"
+                : ai.mode === "rules" ? "luật có sẵn" + (ai.has_key ? "" : " (chưa có API key)") : "…";
+      $("aiStatus").textContent = "AI Thiên Đạo: " + lab + (ai.note ? " · " + ai.note : "") + (ai.error ? " · lỗi: " + ai.error : "");
+    }).catch(() => { $("aiStatus").textContent = "AI Thiên Đạo: không nối được cầu nối (đã chạy live_bridge.py chưa?)"; });
   };
-  step(); LIVE.bridgeTick = setInterval(step, 2000);
+  step(); LIVE.bridgeTick = setInterval(step, 1500);
+  const push = () => { if (!prog || !me) return;
+    fetch(bridgeBase() + "/state", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(liveSnapshot()) }).catch(() => {}); };
+  push(); LIVE.stateTick = setInterval(push, 4000);
+}
+function liveSnapshot(){
+  const online = window.ONLINE && ONLINE.on;
+  const st = formStage(), R = st < 8 ? RECIPES[st + 1] : null;
+  return { map: curMap ? curMap.id : "", mapName: curMap ? curMap.name : "", hp: prog.hp, merges: prog.merges, power: effPower(),
+           loai_cua_streamer: me.creature.disp, dang_thu: beastName(), cap: st,
+           tien_hoa_tiep: R ? { can_gop: R.merges, bo_phan_thieu: R.parts.filter(p => partCount(p) < p.need).map(p => p.label) } : null,
+           con_moi: (online ? [] : curTargets.filter(c => !prog.absorbed.includes(c.taxid)).slice(0, 6).map(c => ({ ten: c.disp, luc: powerOf(c.blocks), yeu_hon: powerOf(c.blocks) <= effPower() }))),
+           vong: { phase: LIVE.phase, san: LIVE.san, chay: LIVE.chay }, linh_khi: Math.round(LIVE.qi), buff: LIVE.buffUntil > Date.now() };
+}
+
+/* ===== Su kien live (TikTok...) -> tuong tac trong game ===== */
+function tickerAdd(cls, html){
+  const el = $("liveTicker"); if (!el) return;
+  const d = document.createElement("div"); d.className = "tk " + cls; d.innerHTML = html; el.appendChild(d);
+  while (el.children.length > 6) el.removeChild(el.firstChild);
+  setTimeout(() => { if (d.parentNode) d.parentNode.removeChild(d); }, 14000);
+}
+function localOnly(){ return !(window.ONLINE && ONLINE.on) && prog && me; }
+function stageFlash(){ const st = $("stage"); st.classList.remove("fxFlash"); void st.offsetWidth; st.classList.add("fxFlash"); }
+function handleLiveEvent(ev){
+  if (!LIVE.on) return;
+  const u = esc(ev.user || "khách");
+  switch (ev.type){
+    case "comment": castVote(ev.user, ev.text); if (!voteKind(ev.text) && !mapFromText(ev.text)) tickerAdd("cm", "💬 <b>" + u + ":</b> " + esc(ev.text)); break;
+    case "like": addQi((ev.count || 1) * 0.6); break;
+    case "gift": giftEffect(ev); break;
+    case "follow": tickerAdd("follow", "➕ <b>" + u + "</b> vừa follow — một sinh linh nhập Sơn Hải!"); spawnViewerCreature(ev.user); break;
+    case "share": tickerAdd("share", "🔗 <b>" + u + "</b> đã chia sẻ"); if (localOnly()){ prog.hp = Math.min(100, prog.hp + 5); updateHUD(); } break;
+    case "join": tickerAdd("cm", "👋 " + u + " vào phòng"); break;
+  }
+}
+function addQi(n){
+  LIVE.qi = Math.min(100, LIVE.qi + n);
+  const f = $("qiFill"); if (f) f.style.width = LIVE.qi + "%";
+  if (LIVE.qi >= 100){
+    LIVE.qi = 0; if (f) f.style.width = "0%";
+    if (localOnly()){ prog.hp = Math.min(100, prog.hp + 30); updateHUD(); }
+    stageFlash(); toast("✨ Linh khí tràn đầy! Cả phòng thả tim — sinh lực hồi +30", 3200);
+    tickerAdd("gift", "✨ <b>Linh khí đầy!</b> +30 sinh lực");
+  }
+}
+function giftEffect(ev){
+  const coins = (+ev.coins || 0), u = esc(ev.user || "khách"), g = esc(ev.gift || "quà");
+  tickerAdd("gift", "🎁 <b>" + u + "</b> tặng <b>" + g + "</b>" + ((+ev.count || 1) > 1 ? " ×" + (+ev.count) : ""));
+  if (!localOnly()) return;
+  if (coins >= 100){ worldEvent("boss", ev.user); }
+  else if (coins >= 10){ LIVE.buffUntil = Date.now() + 60000; updateHUD(); stageFlash(); toast("🌟 " + u + " ban phước — lực +20% trong 60 giây!", 3000); }
+  else { prog.hp = Math.min(100, prog.hp + 15); updateHUD(); toast("💚 " + u + " tiếp sức — hồi +15 sinh lực", 2400); }
+  saveProg();
+}
+function spawnViewerCreature(name){
+  if (!localOnly() || !curTargets.length) return;
+  const pool = ALL.filter(r => !prog.absorbed.includes(r[0]) && r[0] !== me.creature.taxid && classArt(r[5]));
+  if (!pool.length) return;
+  const c = fromRow(pool[Math.floor(Math.random() * pool.length)]);
+  c.viewer = String(name || "khách").slice(0, 24);
+  curTargets[curTargets.length - 1 - Math.floor(Math.random() * 2)] = c;
+  renderLayer();
+}
+function worldEvent(kind, by){
+  if (!localOnly()) return;
+  const who = by ? " nhờ " + esc(by) : "";
+  if (kind === "rain_linh_khi"){ prog.hp = Math.min(100, prog.hp + 40); stageFlash(); toast("🌧✨ Mưa linh khí" + who + " — hồi +40 sinh lực!", 3400); }
+  else if (kind === "blessing"){ LIVE.buffUntil = Date.now() + 90000; stageFlash(); toast("🌟 Thiên Đạo ban phúc" + who + " — lực +20% trong 90 giây!", 3400); }
+  else if (kind === "storm"){
+    if (prog.hp > 25){ prog.hp -= 12; toast("⛈ Bão Sơn Hải ập tới — mất 12 sinh lực! Có kẻ rình trong bão…", 3400); }
+    const pr = curTargets.filter(c => !prog.absorbed.includes(c.taxid) && powerOf(c.blocks) > effPower());
+    if (pr.length) setTimeout(() => openEncounter(pr[Math.floor(Math.random() * pr.length)], true), 900);
+  }
+  else if (kind === "boss"){
+    const e = effPower(), cand = ALL.filter(r => !prog.absorbed.includes(r[0]) && r[0] !== me.creature.taxid && powerOf(r[4]) >= e * 0.9 && powerOf(r[4]) <= e * 1.12);
+    if (cand.length){
+      const c = fromRow(cand[Math.floor(Math.random() * cand.length)]); c.boss = true;
+      curTargets[curTargets.length - 1] = c; renderLayer(); stageFlash();
+      toast("👑 Hộ pháp xuất hiện" + who + ": <b>" + esc(c.disp) + "</b> — sức ngang bạn, săn được sẽ gộp ngay gen!", 4200);
+    } else { prog.hp = Math.min(100, prog.hp + 25); toast("👑 Hộ pháp ban phúc" + who + " — hồi +25 sinh lực", 3000); }
+  }
+  updateHUD(); saveProg();
+}
+let tdTimer = null;
+function tdSay(text, to){
+  const b = $("tdBubble"); if (!b) return;
+  b.innerHTML = "<small>THIÊN ĐẠO</small>" + (to ? "<b>@" + esc(to) + "</b> " : "") + esc(text);
+  b.style.opacity = 1; clearTimeout(tdTimer); tdTimer = setTimeout(() => { b.style.opacity = 0; }, Math.min(9000, 3500 + text.length * 55));
+  tickerAdd("cm", "🔮 " + esc(text));
+  const t = $("ttsChk");
+  if (t && t.checked && window.speechSynthesis){ try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "vi-VN"; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {} }
+}
+function handleAiAction(a){
+  if (!LIVE.on) return;
+  if (a.kind === "say") tdSay(a.text || "", a.to || "");
+  else if (a.kind === "command") LIVE.aiCmd = { do: a.do, map: a.map, at: Date.now() };
+  else if (a.kind === "world_event") worldEvent(a.event, "");
 }
 function pasteVotes(){
   const lines = ($("pasteBox").value || "").split("\n").map(s => s.trim()).filter(Boolean);
