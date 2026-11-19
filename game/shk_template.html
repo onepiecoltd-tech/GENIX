@@ -232,6 +232,7 @@
     <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="demoChk" onchange="toggleDemo(this.checked)"> 🎭 Mô phỏng bình luận (để test thử)</label>
     <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="bridgeChk" onchange="toggleBridge(this.checked)"> 🌉 Cầu nối chat thật TikTok / YouTube / Facebook</label>
     <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="ttsChk"> 🔊 Thiên Đạo đọc thành tiếng (giọng trình duyệt)</label>
+    <label style="font-size:12.5px;display:block;margin:4px 0"><input type="checkbox" id="usageChk"> ⚡ Dùng usage Claude Pro (ưu tiên; hết usage tự chuyển sang API key)</label>
     <div id="aiStatus" style="font-size:11.5px;color:#c9a6ff;margin:2px 0 4px">AI Thiên Đạo: chưa kết nối cầu nối</div>
     <input id="bridgeUrl" value="http://127.0.0.1:8787" style="width:100%;margin:2px 0 6px;box-sizing:border-box">
     <textarea id="pasteBox" rows="3" placeholder="Hoặc dán bình luận vào đây, mỗi dòng một bình luận…" style="width:100%;box-sizing:border-box"></textarea>
@@ -826,6 +827,10 @@ function toggleDemo(on){
   }, 900);
 }
 function bridgeBase(){ return ($("bridgeUrl").value || "http://127.0.0.1:8787").replace(/\/$/, ""); }
+$("usageChk").addEventListener("change", e => {          // nút bật/tắt usage Claude Pro (ưu tiên usage, hết thì dùng API key)
+  fetch(bridgeBase() + "/ai", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ use_usage: e.target.checked }) })
+    .catch(() => { $("aiStatus").textContent = "AI Thiên Đạo: không nối được cầu nối để đổi chế độ usage"; });
+});
 function toggleBridge(on){
   clearInterval(LIVE.bridgeTick); clearInterval(LIVE.stateTick);
   if (!on){ $("aiStatus").textContent = "AI Thiên Đạo: chưa kết nối cầu nối"; return; }
@@ -835,7 +840,10 @@ function toggleBridge(on){
       (j.events || []).forEach(ev => { LIVE.seqE = Math.max(LIVE.seqE, ev.seq || 0); handleLiveEvent(ev); });
       (j.actions || []).forEach(a => { LIVE.seqA = Math.max(LIVE.seqA, a.seq || 0); handleAiAction(a); });
       const ai = j.ai || {};
-      $("aiStatus").textContent = "AI Thiên Đạo: " + (ai.mode === "claude" ? "Claude (" + esc(ai.model) + ") ✓" : ai.mode === "rules" ? "luật có sẵn (chưa có API key)" : "…") + (ai.error ? " · lỗi: " + esc(ai.error) : "");
+      if (document.activeElement !== $("usageChk")) $("usageChk").checked = !!ai.use_usage;
+      const lab = ai.mode === "claude" ? (ai.backend === "usage" ? "Claude Pro usage (" : "Claude API (") + ai.model + ") ✓"
+                : ai.mode === "rules" ? "luật có sẵn" + (ai.has_key ? "" : " (chưa có API key)") : "…";
+      $("aiStatus").textContent = "AI Thiên Đạo: " + lab + (ai.note ? " · " + ai.note : "") + (ai.error ? " · lỗi: " + ai.error : "");
     }).catch(() => { $("aiStatus").textContent = "AI Thiên Đạo: không nối được cầu nối (đã chạy live_bridge.py chưa?)"; });
   };
   step(); LIVE.bridgeTick = setInterval(step, 1500);

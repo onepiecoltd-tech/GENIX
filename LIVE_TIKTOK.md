@@ -31,7 +31,20 @@ TikTok → `live_bridge.py` (chuẩn hoá sự kiện) → game đọc `/poll` �
 - Hạn mức: tối đa `AI_MAX_CALLS_PER_HOUR` lần gọi/giờ; live vắng thì 1 lượt/45s. Lỗi mạng/AI → tự chuyển sang luật có sẵn (cảm ơn quà/follow bằng mẫu câu).
 - Không có `ANTHROPIC_API_KEY` → chạy luật có sẵn, mọi tương tác game vẫn hoạt động.
 
+## Hai nguồn AI: API key (chính) và usage Claude Pro (phụ, có nút bật/tắt)
+| Nút ⚡ "Dùng usage Claude Pro" | Thứ tự dùng |
+|---|---|
+| **Tắt** (mặc định) | API key → luật có sẵn |
+| **Bật** | `claude` (usage gói Pro) → hết usage/lỗi tự chuyển **API key** → luật có sẵn |
+
+- Nút nằm cạnh ô chọn cầu nối trong game (hoặc đặt `AI_USE_USAGE=1` trong `live.env`). Dòng trạng thái cho biết đang dùng nguồn nào, ví dụ `Claude Pro usage (haiku) ✓` hoặc `hết usage Claude Pro → đã chuyển sang API key`.
+- Cần cài Claude Code và đăng nhập sẵn (chạy `claude` một lần trong terminal). Bridge gọi `claude -p` với **toàn bộ công cụ tắt**, không nạp MCP, không lưu phiên, chạy trong thư mục tạm rỗng; tin nhắn gửi qua stdin. `ANTHROPIC_API_KEY` bị **gỡ khỏi môi trường tiến trình con** (nếu để lại, Claude Code sẽ tính tiền API thay vì usage).
+- Hết usage: bridge đọc thời điểm reset nếu `claude` báo, không thì thử lại sau 15 phút; bấm tắt/bật nút để thử lại ngay (ví dụ sau khi đăng nhập lại). Khi nút bật mà CLI đang chờ nhịp (`CLI_MIN_GAP`, mặc định 20s) bridge **chờ**, không đốt API key.
+- Chậm hơn API (mỗi lượt khởi động một tiến trình), và live dài có thể chạm hạn mức 5 giờ của gói. Đầu ra vẫn qua cùng bộ lọc danh sách cố định như API.
+- Dùng chương trình tự động gọi `claude` bằng đăng nhập gói Pro: bạn nên tự đọc lại điều khoản gói của Anthropic cho phù hợp mục đích dùng.
+
 ## Giới hạn (nói thẳng)
+- Backend usage (`claude -p`) mới chỉ test với `claude` giả, **chưa chạy với Claude Code đã đăng nhập thật**: cần thử một lượt trước khi live (mở terminal, gõ `claude -p "xin chào"` xem có trả lời không).
 - Thư viện **TikTokLive không chính thức**: có thể hỏng khi TikTok đổi giao thức, và dùng nó là rủi ro với điều khoản TikTok. Luôn có cách dự phòng: dán bình luận / gõ `/gift Rose 5`, `/follow tên`, `/like 20` vào cửa sổ bridge.
 - Hiệu ứng quà/tim/follow/sự kiện thế giới chạy ở **chế độ chơi đơn của streamer** (LIVE). Chế độ online nhiều người chỉ nhận lời bình/lệnh, vì trạng thái ở đó do server quyết định.
 - Quà tặng chỉ gắn với hiệu ứng vui trong game; không hứa lợi thế thắng-thua hay giá trị quy đổi.
