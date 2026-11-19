@@ -66,17 +66,20 @@ def data_uri(path: Path, max_w: int) -> str:
 
 def main():
     gd = json.loads((ROOT / "data" / "game_data.json").read_text())
-    featured = [{"t": sp["taxid"], "vn": sp["vn"], "n": sp["name"],
+    ten = json.loads((ROOT / "data" / "ten_viet.json").read_text())   # ten Viet/Han Viet (python3 examples/gen_ten_viet.py)
+    featured = [{"t": sp["taxid"], "vn": ten.get(str(sp["taxid"]), sp["vn"]),
                  "g": GROUP_MAP.get(sp["group"], sp["group"]),
                  "ge": sp["genes"], "b": sp["blocks"]} for sp in gd["species"]]
     pack = json.loads((ROOT / "data" / "game_species_all.json").read_text())
+    # game chi mang ten Viet: thay ten khoa hoc (cot 1) bang ten Viet/Han Viet
+    pack["species"] = [[r[0], ten[str(r[0])]] + r[2:] for r in pack["species"]]
     shk = json.loads((ROOT / "data" / "shk_data.json").read_text())
     game_data = {"featured": featured, "species": pack["species"], "shk": shk}
     by_taxid = {r[0]: r for r in pack["species"]}
     for t, vn, g in PORTRAITS:
         r = by_taxid.get(t)
         if r:
-            game_data["featured"].append({"t": t, "vn": vn, "n": r[1], "g": g,
+            game_data["featured"].append({"t": t, "vn": ten.get(str(t), vn), "g": g,
                                           "ge": r[3], "b": r[4]})
 
     art = {"species": {}, "zones": {}, "forms": {}, "portraits": {}, "classes": {}}
